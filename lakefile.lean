@@ -8,8 +8,7 @@ package «lean_tutorial» where
   ]
   -- add any additional package configuration options here
 
-require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git"
+require "leanprover-community" / "mathlib" @ "git#stable"
 
 @[default_target]
 lean_lib «LeanTutorial» where
