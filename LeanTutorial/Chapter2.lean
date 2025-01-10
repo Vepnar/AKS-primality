@@ -17,3 +17,8 @@ theorem primality (n : ℕ) (hn : n ≥ 2) (a : ℤ) (coprime : IsCoprime (↑ n
 theorem n_choose_k (n : ℕ ) (k : ℕ ) (hk1 : k < n) (hk2 : k > 0) (hn : Prime n)
   : n.choose k % n = 0
   := by sorry
+
+--- TO DO ON MONDAY
+-- check the steps - what are the math propoistions that i need to prove
+-- book cahpter 8 and other relevant
+-- look at the quotients, morphisms, ideal.quotient, ring to quotient map
