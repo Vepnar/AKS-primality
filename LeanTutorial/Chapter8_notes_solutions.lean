@@ -48,44 +48,14 @@ def conjugate {G : Type*} [Group G] (x : G) (H : Subgroup G) : Subgroup G where
     intro a
     intro b
     intro a_def
+    cases' a_def with a1 a2
+    cases' a2 with c1 c2
     intro b_def
-    use a*b, H.mul_mem a_def b_def
-    sorry
-
-example (P Q R : Prop) : (P → (Q ∧ R) → S) := by
-    intro hP
-    intro h
-    cases' h with hQ hR
-
-example {x y : ℝ} (h : x ≤ y) : ¬y ≤ x ↔ x ≠ y := by
-  constructor
-  · contrapose!
-    rintro rfl
-    rfl
-  contrapose!
-  exact le_antisymm h
-section exercises
-variable {G H : Type*} [Group G] [Group H]
-
-open Subgroup
-
-example (φ : G →* H) (S T : Subgroup H) (hST : S ≤ T) : comap φ S ≤ comap φ T := by
-    sorry
-
-example (φ : G →* H) (S T : Subgroup G) (hST : S ≤ T) : map φ S ≤ map φ T := by
-  sorry
-
-variable {K : Type*} [Group K]
-
--- Remember you can use the `ext` tactic to prove an equality of subgroups.
-example (φ : G →* H) (ψ : H →* K) (U : Subgroup K) :
-    comap (ψ.comp φ) U = comap φ (comap ψ U) := by
-  sorry
-
--- Pushing a subgroup along one homomorphism and then another is equal to
--- pushing it forward along the composite of the homomorphisms.
-example (φ : G →* H) (ψ : H →* K) (S : Subgroup G) :
-    map (ψ.comp φ) S = map ψ (S.map φ) := by
-  sorry
-
-end exercises
+    cases' b_def with b1 b2
+    cases' b2 with d1 d2
+    rw[c2]
+    rw[d2]
+    simp
+    apply mul_mem
+    exact c1
+    exact d1
