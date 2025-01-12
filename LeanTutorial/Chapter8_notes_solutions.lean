@@ -34,18 +34,36 @@ def conjugate {G : Type*} [Group G] (x : G) (H : Subgroup G) : Subgroup G where
     apply one_mem
   inv_mem' := by
     dsimp
-    rintro k
-    rintro k_mem
-    sorry
+    intro k k_def
+    cases' k_def with h p
+    cases' p with a b
+    rw[b]
+    simp
+    use h⁻¹
+    group
+    simp
+    exact a
   mul_mem' := by
     dsimp
-    intro k
-    intro kk
-    intro j
-    intro jj
+    intro a
+    intro b
+    intro a_def
+    intro b_def
+    use a*b, H.mul_mem a_def b_def
     sorry
 
+example (P Q R : Prop) : (P → (Q ∧ R) → S) := by
+    intro hP
+    intro h
+    cases' h with hQ hR
 
+example {x y : ℝ} (h : x ≤ y) : ¬y ≤ x ↔ x ≠ y := by
+  constructor
+  · contrapose!
+    rintro rfl
+    rfl
+  contrapose!
+  exact le_antisymm h
 section exercises
 variable {G H : Type*} [Group G] [Group H]
 
