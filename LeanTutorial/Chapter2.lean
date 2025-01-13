@@ -29,7 +29,8 @@ section
   open Polynomial
   theorem primality (n : ℕ) (hn : n ≥ 2) (a : ZMod n) (coprime : Invertible a)
     : Nat.Prime n ↔ (X + C a)^n = X^n + C a
-    := let R := Polynomial (ZMod n); by
+    := by
+      let R := Polynomial (ZMod n)
       let g := (X + C a)^n - (X^n + C a)
       have hg : g = ∑ i ∈ Finset.range (n-1), monomial (i+1) (↑ (n.choose (i+1))) := by
         unfold g
