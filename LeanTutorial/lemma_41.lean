@@ -62,9 +62,12 @@ example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
 
 #check H
 
-open Classical
-
 lemma lemma41 (S : Set ℕ := { k | ∀ g ∈ H (p := p) (r := r) (A := A), g^k = AdjoinRoot.liftHom (f) (α^k) helper g})
 (H : Submonoid (AdjoinRoot (R := ZMod p) (X^r - 1)) := Submonoid.closure {h | ∃ (n : ℕ), n ≤ A ∧ h = AdjoinRoot.of (X^r-1) (↑ n)})
 (a b : ℕ ) (ha : a > 0) (hb : b > 0) (sha : a ∈ S) (shb : b ∈ S) : a*b ∈ S := by
-  let (g : H)
+  sorry
+
+
+lemma lemma42 (G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H (A := A)))
+(a b r : ℕ ) (ha : a ∈ S) (hb : b ∈ S) (hab : a = b % r) : a = b % G.ncard := by
+sorry
