@@ -1,12 +1,12 @@
 import Mathlib
 open Polynomial
 
-noncomputable def ZtoZp (p : ℕ ) := Polynomial.map (Int.castRingHom (ZMod p))
+noncomputable def ZtoZp (p : ℕ) := Polynomial.map (Int.castRingHom (ZMod p))
 #check ZtoZp 5 (6*X^5)
 
-noncomputable def extracth (r : ℕ ) := ZtoZp r (Polynomial.cyclotomic r ℤ )
+noncomputable def extracth (r : ℕ) := ZtoZp r (Polynomial.cyclotomic r ℤ)
 
-def bigF (p : ℕ ) (h : Polynomial (ZMod p))
+def bigF (p : ℕ) (h : Polynomial (ZMod p))
 := AdjoinRoot h
 
 noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] : Field (bigF p h) := by
@@ -21,7 +21,7 @@ section
 
   noncomputable def H : Submonoid (AdjoinRoot (R := ZMod p) (X^r - 1))
     := Submonoid.closure
-        {h | ∃ (n : ℕ), n ≤ A ∧ h = AdjoinRoot.of (X^r-1) (↑ n)}
+        {h | ∃ (n : ℕ), n ≤ A ∧ h = α + AdjoinRoot.of f (↑ n)}
 
   noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H (A := A))
 
@@ -46,7 +46,7 @@ section
 
   def S : Set ℕ := {
     k | ∀ g ∈ H (p := p) (r := r) (A := A),
-      g^k = AdjoinRoot.liftHom (f) (α^k) helper g
+      g^k = AdjoinRoot.liftHom f (α^k) helper g
     }
 
   def stmt1 (g : bigF p h) (hg : g ∈ G (p := p) (r := r) (A := A) (h_divides := h_divides)) : g ≠ 0 :=
@@ -62,12 +62,12 @@ example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
 
 #check H
 
-lemma lemma41 (S : Set ℕ := { k | ∀ g ∈ H (p := p) (r := r) (A := A), g^k = AdjoinRoot.liftHom (f) (α^k) helper g})
-(H : Submonoid (AdjoinRoot (R := ZMod p) (X^r - 1)) := Submonoid.closure {h | ∃ (n : ℕ), n ≤ A ∧ h = AdjoinRoot.of (X^r-1) (↑ n)})
-(a b : ℕ ) (ha : a > 0) (hb : b > 0) (sha : a ∈ S) (shb : b ∈ S) : a*b ∈ S := by
+lemma lemma41 (a b : ℕ) (ha : a > 0) (hb : b > 0)
+  (sha : a ∈ S (p := p) (A := A) (r := r))
+  (shb : b ∈ S (p := p) (A := A) (r := r))
+  : a*b ∈ S (p := p) (A := A) (r := r) := by
   sorry
 
 
-lemma lemma42 (G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H (A := A)))
-(a b r : ℕ ) (ha : a ∈ S) (hb : b ∈ S) (hab : a = b % r) : a = b % G.ncard := by
+lemma lemma42 (a b : ℕ) (ha : a ∈ S (p := p)) (hb : b ∈ S) (hab : a = b % r) : a ≡ b [MOD G.ncard] := by
 sorry
