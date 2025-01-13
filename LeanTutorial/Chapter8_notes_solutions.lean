@@ -34,8 +34,11 @@ def conjugate {G : Type*} [Group G] (x : G) (H : Subgroup G) : Subgroup G where
     apply one_mem
   inv_mem' := by
     dsimp
+    --rintro - ⟨k,k_def, rfl⟩
     intro k k_def
     cases' k_def with h p
+    --rcases k_def with ⟨h, p1,p2⟩
+    -- rw[← mul_left_inj (x)] at p2
     cases' p with a b
     rw[b]
     simp
