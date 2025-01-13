@@ -1,5 +1,8 @@
 import Mathlib
 
+def isPerfectPower (n : ℤ) (p : ℕ): Prop :=
+  ∃ m : ℤ, m > 1 ∧ p ≥ 2 ∧ m^p = n
+
 -- this is in mathlib: Nat.Prime.dvd_choose_pow_iff
 theorem n_choose_k (p : ℕ) (k : ℕ) (hk1 : k < p) (hk2 : k > 0) (hp : Nat.Prime p)
   : p ∣ p.choose k
