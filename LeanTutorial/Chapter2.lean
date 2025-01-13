@@ -5,12 +5,18 @@ theorem n_choose_k (p : ℕ) (k : ℕ) (hk1 : k < p) (hk2 : k > 0) (hp : Nat.Pri
   : p ∣ p.choose k
   := by
     have h := (Nat.Prime.dvd_choose_pow_iff (n := 1) (k := k) (p := p) hp).mpr
+    -- Nat.Prime.dvd_choose_self
     rw [pow_one] at h
     have h2 : k ≠ 0 ∧ k ≠ p := by
       constructor
       exact Nat.not_eq_zero_of_lt hk2
       exact Nat.ne_of_lt hk1
     exact h h2
+
+theorem n_choose_k' (p : ℕ) (k : ℕ) (hk1 : k < p) (hk2 : k > 0) (hp : Nat.Prime p)
+  : p.choose k % p = 0
+  := by
+  sorry
 
 lemma todo (n : ℕ) (hn : ¬ Nat.Prime n) : ∃ (p : ℕ), Nat.Prime p ∧ multiplicity p n ≥ 1 := by
   #check WfDvdMonoid.exists_irreducible_factor (α := ℕ) (a := n)
@@ -71,7 +77,5 @@ section
         simp [coeff_zero] at this
         exact h4 this
 
---- TO DO ON MONDAY
--- check the steps - what are the math propoistions that i need to prove
--- book cahpter 8 and other relevant
--- look at the quotients, morphisms, ideal.quotient, ring to quotient map
+
+--def perfect_pow
