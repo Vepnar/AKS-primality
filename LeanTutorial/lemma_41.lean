@@ -4,34 +4,13 @@ open Polynomial
 noncomputable def ZtoZp (p : ℕ ) := Polynomial.map (Int.castRingHom (ZMod p))
 #check ZtoZp 5 (6*X^5)
 
--- def extracth
+noncomputable def extracth (r : ℕ ) := ZtoZp r (Polynomial.cyclotomic r ℤ )
 
 def bigF (p : ℕ ) (h : Polynomial (ZMod p))
 := AdjoinRoot h
 
--- putting in the database that lean has the fact that it is a field
--- haveI for inst
--- let for functions
--- have for proof of prop
 noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] : Field (bigF p h) := by
   exact AdjoinRoot.instField
-
--- Polynomial.factor
--- Polynomial.irreducible_factor
--- Polynomial.cyclotomic
--- reducing polynomials over Z to Z/p
-
--- map cyclotomic polynomial to polynomial over Z mod p
-
--- first take the rth cyclotomic polynomial of x^r-1
--- then map it to Zp
--- then extract an irreducible factor
-
-
--- now find a function that sends pol in Z to Zp
--- polynomial
-
--- morphism from r to s -- each coefficient of the polynomial is mapped through morphism
 
 section
   variable {p r : ℕ} [Fact (Nat.Prime p)] {h : Polynomial (ZMod p)} [Fact (Irreducible h)] {h_divides : h ∣ X^r - 1} {A : ℕ}
@@ -74,12 +53,18 @@ section
     by sorry
 
 
-  -- Q₁: Is this the correct way of defining G
-  -- Q₂: Why does x ∈ S not work?
-  lemma eq_mod_card_of_eq_mod_r (a b : ℕ) {G: Type*} [Group G] (G : Submonoid (bigF p h)) (ha: a ∈ S) (hb: b ∈ S) (hm: a % r = b % r) : a % Nat.card G = b % Nat.card G := sorry
 
 
 example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
 
 
 #check Int.castRingHom (ZMod 3)
+
+#check H
+
+open Classical
+
+lemma lemma41 (S : Set ℕ := { k | ∀ g ∈ H (p := p) (r := r) (A := A), g^k = AdjoinRoot.liftHom (f) (α^k) helper g})
+(H : Submonoid (AdjoinRoot (R := ZMod p) (X^r - 1)) := Submonoid.closure {h | ∃ (n : ℕ), n ≤ A ∧ h = AdjoinRoot.of (X^r-1) (↑ n)})
+(a b : ℕ ) (ha : a > 0) (hb : b > 0) (sha : a ∈ S) (shb : b ∈ S) : a*b ∈ S := by
+  let (g : H)
