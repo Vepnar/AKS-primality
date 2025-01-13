@@ -74,6 +74,9 @@ section
     by sorry
 
 
+  -- Q₁: Is this the correct way of defining G
+  -- Q₂: Why does x ∈ S not work?
+  lemma eq_mod_card_of_eq_mod_r (a b : ℕ) {G: Type*} [Group G] (G : Submonoid (bigF p h)) (ha: a ∈ S) (hb: b ∈ S) (hm: a % r = b % r) : a % Nat.card G = b % Nat.card G := sorry
 
 
 example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
