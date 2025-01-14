@@ -115,4 +115,18 @@ lemma lemma42 (a b : ℕ)
   (hb : b ∈ S (p := p) (A := A) (r := r))
   (hab : a = b % r) :
   a ≡ b [MOD Nat.card (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))] := by
+  have : ∀ (g : Polynomial ℤ) (u v : ℤ), u - v ∣ (Polynomial.eval u g) - (Polynomial.eval u g) := by
+    exact fun g u v ↦ Int.ModEq.dvd rfl
+  let f : Polynomial (ZMod p) := X^r - 1
+  let ab : Polynomial (ZMod p) := X^(a-b % r)-1
+  have : f ∣ ab := by
+    unfold ab
+    simp [hab]
+  let xaxb : Polynomial (ZMod p) := X^a - X^b
+  have : ab ∣ xaxb := by
+    unfold xaxb
+    unfold ab
+    rw [hab]
+    simp
+    sorry
   sorry
