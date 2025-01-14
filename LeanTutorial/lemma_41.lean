@@ -132,8 +132,8 @@ lemma lemma42 (a b : ℕ)
 
     let xaxb : Polynomial (ZMod p) := X^a - X^b
     have ab_dvd_xaxb : ab ∣ xaxb := by
-      constructor
-      rotate_left 1
+      constructor -- what does this do
+      rotate_left 1 -- what does this do
       . exact X^b
       . ring_nf
         rw [← pow_add, add_comm b (a-b), Nat.sub_add_cancel hineq]
@@ -195,3 +195,6 @@ lemma lemma42'wrong (a b : ℕ)
     refine eq_zero_of_eq_zero ?_ (X ^ a - X ^ b) -- arrive at contradiction?
     sorry
   sorry
+
+
+-- for lemma 43 reduction and degree??
