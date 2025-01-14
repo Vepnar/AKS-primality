@@ -107,26 +107,61 @@ lemma lemma41 (a b : ℕ)
     _ = ψ g := by rw [this]
     _ = _ := rfl
 
-
-
-
 lemma lemma42 (a b : ℕ)
+  (hineq : a ≥ b)
   (ha : a ∈ S (p := p) (A := A) (r := r))
   (hb : b ∈ S (p := p) (A := A) (r := r))
-  (hab : a = b % r) :
+  (hab : a ≡ b [MOD r]) :
   a ≡ b [MOD Nat.card (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))] := by
-  have : ∀ (g : Polynomial ℤ) (u v : ℤ), u - v ∣ (Polynomial.eval u g) - (Polynomial.eval u g) := by
-    exact fun g u v ↦ Int.ModEq.dvd rfl
-  let f : Polynomial (ZMod p) := X^r - 1
-  let ab : Polynomial (ZMod p) := X^(a-b % r)-1
-  have : f ∣ ab := by
-    unfold ab
-    simp [hab]
-  let xaxb : Polynomial (ZMod p) := X^a - X^b
-  have : ab ∣ xaxb := by
-    unfold xaxb
-    unfold ab
-    rw [hab]
-    simp
-    sorry
+
+  -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
+  let f : Polynomial (ZMod p) := X^r-1
+  have part1 : ∀ g : Polynomial (Polynomial (ZMod p)), AdjoinRoot.mk f (g.eval (X^a)) = AdjoinRoot.mk f (g.eval (X^b)) := by
+    intro g
+
+    let ab : Polynomial (ZMod p) := X^(a-b)-1
+    have f_dvd_ab : f ∣ ab := by
+      let k := (a - b)/r
+      have : r ∣ a-b := (Nat.modEq_iff_dvd' hineq).mp (Nat.ModEq.symm hab)
+      have : r * k = (a-b) := Nat.mul_div_cancel' this
+      unfold ab
+      rw [←this]
+      have := sub_dvd_pow_sub_pow (X^r : Polynomial (ZMod p)) 1 k
+      rw [one_pow, ← pow_mul] at this
+      exact this
+
+    let xaxb : Polynomial (ZMod p) := X^a - X^b
+    have ab_dvd_xaxb : ab ∣ xaxb := by
+      constructor
+      rotate_left 1
+      . exact X^b
+      . ring_nf
+        rw [← pow_add, add_comm b (a-b), Nat.sub_add_cancel hineq]
+        ring
+
+    have xaxb_dvd_gxagxb : xaxb ∣ g.eval (X^a) - g.eval (X^b)
+      := sub_dvd_eval_sub (X^a) (X^b) g
+
+    have : f ∣ g.eval (X^a) - g.eval (X^b)
+      := dvd_trans (dvd_trans f_dvd_ab ab_dvd_xaxb) xaxb_dvd_gxagxb
+
+    exact eq_of_sub_eq_zero (AdjoinRoot.mk_eq_zero.mpr this)
+
+  -- part 2: applying this to elements of H
+
+  have part2 : ∀ g ∈ H (p := p) (A := A) (r := r), g^a = g^b := by
+    intro g hg
+    -- ASK ALAIN
+    rw [ha, hb] <;> try assumption
+    obtain ⟨poly, hp⟩ := AdjoinRoot.mk_surjective g
+
+    have : AdjoinRoot.liftHom f (α^a) helper g = (Polynomial.map (AdjoinRoot.of f) poly).eval (α^a) := by
+      rw [←hp, AdjoinRoot.liftHom_mk (a := α^a) f helper (g := poly), eval_map]
+      rfl
+
+    -- ASK ALAIN: problems because of different definitions of f
+    unfold _root_.f
+    unfold f at this
+    rw[this]
+
   sorry
