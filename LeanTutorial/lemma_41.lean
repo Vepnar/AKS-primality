@@ -25,7 +25,7 @@ section
     := Submonoid.closure
         {h | ∃ (n : ℕ), n ≤ A ∧ h = α + AdjoinRoot.of f (↑ n)}
 
-  noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H (A := A))
+  noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H (A := A))-- what is this homomorphism from and to?
   -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
   -- Show that f(X^k) = 0, needed for the definition of S (for evaluation of f at X^k to be well-defined)
   lemma helper : (aeval ((AdjoinRoot.root (f (p := p) (r := r))) ^ k)) (f (p := p) (r := r)) = 0 := by
@@ -112,7 +112,7 @@ lemma lemma42 (a b : ℕ)
   (ha : a ∈ S (p := p) (A := A) (r := r))
   (hb : b ∈ S (p := p) (A := A) (r := r))
   (hab : a ≡ b [MOD r]) :
-  a ≡ b [MOD Nat.card (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))] := by
+  a ≡ b [MOD Nat.card (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))] := by -- how many versions of mod there are? is it possible to write is as %?
 
   -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
   let f : Polynomial (ZMod p) := X^r-1
@@ -164,4 +164,34 @@ lemma lemma42 (a b : ℕ)
     unfold f at this
     rw[this]
 
+  sorry
+
+
+lemma lemma42'wrong (a b : ℕ)
+  (ha : a ∈ S (p := p) (A := A) (r := r))
+  (hb : b ∈ S (p := p) (A := A) (r := r))
+  (hab : a = b % r) :
+  a ≡ b [MOD Nat.card (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))] := by -- how many versions of mod there are? is it possible to write is as %?
+  have : ∀ (g : Polynomial ℤ) (u v : ℤ), u - v ∣ (Polynomial.eval u g) - (Polynomial.eval v g) := by -- here there was a mistake and instead of v there was u, correct me if i am wrong
+    exact fun g u v ↦ Int.ModEq.dvd rfl -- then the proof does not work?
+  let f : Polynomial (ZMod p) := X^r - 1 -- why do we not define p at any point?
+  let ab : Polynomial (ZMod p) := X^(a-b % r)-1 -- why are we looking at a-b mod r and not a-b [*]
+  have : f ∣ ab := by
+    unfold ab -- what does unfold do?
+    simp [hab] -- why does f divide this?
+  let xaxb : Polynomial (ZMod p) := X^a - X^b
+  have : ab ∣ xaxb := by
+    unfold xaxb
+    unfold ab
+    rw [hab]
+    simp
+    --rw [sub_eq_zero]
+    rw [← hab]
+    --rw [pow_right_inj₀]
+    --rw [pow_inj_mod]
+    --rw [pow_inj_iff_of_orderOf_eq_zero]
+    --rw [← orderOf_dvd_sub_iff_zpow_eq_zpow]
+    --rw [← zpow_mod_orderOf]
+    refine eq_zero_of_eq_zero ?_ (X ^ a - X ^ b) -- arrive at contradiction?
+    sorry
   sorry
