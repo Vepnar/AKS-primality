@@ -12,6 +12,10 @@ def bigF (p : ℕ) (h : Polynomial (ZMod p))
 noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] : Field (bigF p h) := by
   exact AdjoinRoot.instField
 
+-- ASK ALAIN
+noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] : Fintype (bigF p h) := by
+  sorry
+
 
 -- ASK ALAIN: variables?
 section
@@ -26,7 +30,17 @@ section
         {h | ∃ (n : ℕ), n ≤ A ∧ h = α + AdjoinRoot.of f (↑ n)}
 
   noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H (A := A))-- what is this homomorphism from and to?
+
   -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
+  lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd h_divides (α + AdjoinRoot.of f (↑ k)) ≠ 0 := by
+    -- this requires some conditions (p is a prime divisor of n, n has no prime divisors smaller than... etc.)
+    sorry
+
+  lemma g_subgroup_helper2 : (↑ (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))) ⊆ (Set.compl {0} : Set (bigF p h)) := sorry
+
+  -- somehow state that G is a subgroup of the invertible elems bigF
+  -- ASK ALAIN
+
   -- Show that f(X^k) = 0, needed for the definition of S (for evaluation of f at X^k to be well-defined)
   lemma helper : (aeval ((AdjoinRoot.root (f (p := p) (r := r))) ^ k)) (f (p := p) (r := r)) = 0 := by
     let f : Polynomial (ZMod p) := X^r - 1
@@ -51,12 +65,6 @@ section
     k | ∀ g ∈ H (p := p) (r := r) (A := A),
       g^k = AdjoinRoot.liftHom f (α^k) helper g
     }
-
-  def stmt1 (g : bigF p h) (hg : g ∈ G (p := p) (r := r) (A := A) (h_divides := h_divides)) : g ≠ 0 :=
-    by sorry
-
-
-
 
 example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
 
@@ -162,7 +170,21 @@ lemma lemma42 (a b : ℕ)
     -- ASK ALAIN: problems because of different definitions of f
     unfold _root_.f
     unfold f at this
-    rw[this]
+    sorry
+    -- rw[this]
+
+  have : ∀ g ∈ H (p := p) (A := A) (r := r), (AdjoinRoot.algHomOfDvd h_divides g)^a = (AdjoinRoot.algHomOfDvd h_divides g)^b
+    := λ g hg ↦ calc
+    _ = AdjoinRoot.algHomOfDvd h_divides (g^a) := by simp only [map_pow]
+    _ = AdjoinRoot.algHomOfDvd h_divides (g^b) := by rw[part2]; assumption
+    _ = (AdjoinRoot.algHomOfDvd h_divides g)^b := by simp only [map_pow]
+
+  have : ∀ g ∈ G (p := p) (A := A) (r := r) (h := h) (h_divides := h_divides), g^a = g^b := λ g ⟨p, hp, hpg⟩ ↦ by
+    have := this p hp
+    calc
+    g^a = (AdjoinRoot.algHomOfDvd h_divides p)^a := by rw[← hpg]; rfl
+    _ = (AdjoinRoot.algHomOfDvd h_divides p)^b := this
+    _ = g^b := by rw[← hpg]; rfl
 
   sorry
 
