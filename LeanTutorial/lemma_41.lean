@@ -12,6 +12,8 @@ def bigF (p : ℕ) (h : Polynomial (ZMod p))
 noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] : Field (bigF p h) := by
   exact AdjoinRoot.instField
 
+
+-- ASK ALAIN: variables?
 section
   variable {p r : ℕ} [Fact (Nat.Prime p)] {h : Polynomial (ZMod p)} [Fact (Irreducible h)] {h_divides : h ∣ X^r - 1} {A : ℕ}
 
@@ -63,25 +65,49 @@ example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
 
 #check H
 
-lemma lemma41 (a b : ℕ) (ha : a > 0) (hb : b > 0)
+lemma lemma41 (a b : ℕ)
   (sha : a ∈ S (p := p) (A := A) (r := r))
   (shb : b ∈ S (p := p) (A := A) (r := r))
   : a*b ∈ S (p := p) (A := A) (r := r) := by
   show ∀ g ∈ H (p := p) (r := r) (A := A),
-      g^(a*b) = AdjoinRoot.liftHom f (α^(a*b)) helper g
+      g^(a*b) = AdjoinRoot.liftHom _ (α^(a*b)) helper g
 
   intro g hg
   rw [pow_mul, sha, shb]
-  let poly1 := AdjoinRoot.liftHom f (α ^ a) helper g
-  apply congrFun (AdjoinRoot.algHom_ext ?_) g
+
+  -- ugly part to make sure sha and shb actually apply
+  -- ASK ALAIN
+  rotate_right 1
+  trivial
+
+  rotate_right 1
+  rw [← sha]
+  apply pow_mem
+  trivial
+  trivial
+
+  -- proof of what we actually care about
+  let φ := (AdjoinRoot.liftHom f (α ^ b) helper).comp (AdjoinRoot.liftHom (f (p := p) (r := r)) (α ^ a) helper)
+  let ψ := (AdjoinRoot.liftHom (f (p := p) (r := r)) (α ^ (a * b)) helper)
+
+  have : φ = ψ := AdjoinRoot.algHom_ext (by calc
+    _ = (AdjoinRoot.liftHom f (α ^ b) helper) (AdjoinRoot.liftHom (f (p := p) (r := r)) (α ^ a) helper (AdjoinRoot.root f)) := rfl
+    _ = (AdjoinRoot.liftHom f (α ^ b) helper) (α^a) := by (rw[AdjoinRoot.liftHom_root (a := α ^ a) ]; )
+    _ = (AdjoinRoot.liftHom f (α ^ b) helper α)^a := by (simp[AdjoinRoot.liftHom_root]; )
+    _ = (AdjoinRoot.liftHom f (α ^ b) helper (AdjoinRoot.root f))^a := rfl
+    _ = (α ^ b)^a := by rw[AdjoinRoot.liftHom_root]
+    _ = α^(b*a) := by simp[pow_mul]
+    _ = α^(a*b) := by simp[mul_comm]
+    _ = (AdjoinRoot.liftHom f (α ^ (a * b)) helper) (AdjoinRoot.root _) := by simp only [AdjoinRoot.liftHom_root]
+    _ = ψ (AdjoinRoot.root f) := rfl
+    )
+
+  calc
+    _ = φ g := rfl
+    _ = ψ g := by rw [this]
+    _ = _ := rfl
 
 
-
-  simp
-
-
-
-  sorry
 
 
 lemma lemma42 (a b : ℕ)
