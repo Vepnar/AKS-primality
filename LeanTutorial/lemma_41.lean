@@ -69,5 +69,9 @@ lemma lemma41 (a b : ℕ) (ha : a > 0) (hb : b > 0)
   sorry
 
 
-lemma lemma42 (a b : ℕ) (ha : a ∈ S (p := p)) (hb : b ∈ S) (hab : a = b % r) : a ≡ b [MOD G.ncard] := by
-sorry
+lemma lemma42 (a b : ℕ)
+  (ha : a ∈ S (p := p) (A := A) (r := r))
+  (hb : b ∈ S (p := p) (A := A) (r := r))
+  (hab : a = b % r) :
+  a ≡ b [MOD Nat.card (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))] := by
+  sorry
