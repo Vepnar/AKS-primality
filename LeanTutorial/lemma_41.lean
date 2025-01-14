@@ -24,7 +24,8 @@ section
         {h | ∃ (n : ℕ), n ≤ A ∧ h = α + AdjoinRoot.of f (↑ n)}
 
   noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H (A := A))
-
+  -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
+  -- Show that f(X^k) = 0, needed for the definition of S (for evaluation of f at X^k to be well-defined)
   lemma helper : (aeval ((AdjoinRoot.root (f (p := p) (r := r))) ^ k)) (f (p := p) (r := r)) = 0 := by
     let f : Polynomial (ZMod p) := X^r - 1
     let α := AdjoinRoot.root f
@@ -66,6 +67,20 @@ lemma lemma41 (a b : ℕ) (ha : a > 0) (hb : b > 0)
   (sha : a ∈ S (p := p) (A := A) (r := r))
   (shb : b ∈ S (p := p) (A := A) (r := r))
   : a*b ∈ S (p := p) (A := A) (r := r) := by
+  show ∀ g ∈ H (p := p) (r := r) (A := A),
+      g^(a*b) = AdjoinRoot.liftHom f (α^(a*b)) helper g
+
+  intro g hg
+  rw [pow_mul, sha, shb]
+  let poly1 := AdjoinRoot.liftHom f (α ^ a) helper g
+  apply congrFun (AdjoinRoot.algHom_ext ?_) g
+
+
+
+  simp
+
+
+
   sorry
 
 
