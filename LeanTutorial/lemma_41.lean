@@ -74,7 +74,7 @@ example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
 #check H
 
 lemma lemma41 (a b : ℕ)
-  (sha : a ∈ S (p := p) (A := A) (r := r))
+  (sha : a ∈ S (p := p) (A := A) (r := r))  -- make the variables explicit --> ()
   (shb : b ∈ S (p := p) (A := A) (r := r))
   : a*b ∈ S (p := p) (A := A) (r := r) := by
   show ∀ g ∈ H (p := p) (r := r) (A := A),
@@ -220,3 +220,4 @@ lemma lemma42'wrong (a b : ℕ)
 
 
 -- for lemma 43 reduction and degree??
+-- p and n are in S as after that we consider the set of powers... and then we argue something about cardinaily

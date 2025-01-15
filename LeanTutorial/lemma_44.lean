@@ -13,7 +13,7 @@ def rBounds (n : ℕ) : List ℕ :=
 theorem prime_in_bounds(n : ℕ) (h₀ : n ≥ 6) : ∃ r ∈ rBounds n, Nat.Prime r ∧ orderOf (↑ n : ZMod r) > (Nat.log2 n)^2 := by
   by_contra h₁
   simp [not_exists_of_forall_not] at h₁
-
-
-
   sorry
+
+
+def set_between (a b : ℕ ) : Set ℕ :=
