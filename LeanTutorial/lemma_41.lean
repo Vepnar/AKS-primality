@@ -234,7 +234,9 @@ def no_prime_divisors (n : ℕ) (r : ℕ): Prop :=
 def isPerfectPower (n : ℤ) (p : ℕ): Prop :=
   ∃ m : ℤ, m > 1 ∧ p ≥ 2 ∧ m^p = n
 
--- lemma fun_in_H : ∀ g ∈ H, g = ∏
+def polH (a : ℕ ) : Polynomial ℤ := X + ↑a
+
+--lemma fun_in_H (a : ℕ ) (eₐ : ℕ ) (): ∀ g ∈ H, g = ∏₀≤ₐ≤A (X+a) := by
 
 lemma p_in_S : p ∈ S p r A := by
   show ∀ g ∈ H p r A, g^p = AdjoinRoot.liftHom _ (α p r^p) (helper _ _) g
