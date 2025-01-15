@@ -1,9 +1,11 @@
 import Mathlib
 open Polynomial
 
-noncomputable def ZtoZp (p : ℕ) := Polynomial.map (Int.castRingHom (ZMod p))
-#check ZtoZp 5 (6*X^5)
+variable (p r : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] (h_divides : h ∣ X^r - 1) (A : ℕ)
 
+-- TODO: this does not result in an irreducible h.
+-- for now have h as an assumption
+noncomputable def ZtoZp (p : ℕ) := Polynomial.map (Int.castRingHom (ZMod p))
 noncomputable def extracth (r : ℕ) := ZtoZp r (Polynomial.cyclotomic r ℤ)
 
 def bigF (p : ℕ) (h : Polynomial (ZMod p))
@@ -12,59 +14,62 @@ def bigF (p : ℕ) (h : Polynomial (ZMod p))
 noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] : Field (bigF p h) := by
   exact AdjoinRoot.instField
 
--- ASK ALAIN
-noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] : Fintype (bigF p h) := by
+noncomputable instance : Algebra (ZMod p) (bigF p h) := by
+  unfold bigF
+  infer_instance
+
+noncomputable instance : Finite (bigF p h) := by
+  haveI : Fact (Irreducible h) := by assumption
+  have := AdjoinRoot.powerBasis (f := h) (Irreducible.ne_zero this.elim)
+  haveI : Module.Finite (ZMod p) (bigF p h) := PowerBasis.finite this
+  have := Module.finite_of_finite (ZMod p) (M := bigF p h)
+  infer_instance
+
+noncomputable def f : Polynomial (ZMod p) := X^r - 1
+
+noncomputable def α : AdjoinRoot (f p r) := AdjoinRoot.root (f p r)
+
+noncomputable def H : Submonoid (AdjoinRoot (f p r))
+  := Submonoid.closure
+      {h | ∃ (n : ℕ), n ≤ A ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ n)}
+
+noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H p r A)-- what is this homomorphism from and to?
+
+-- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
+lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd h_divides (α p r + AdjoinRoot.of (f p r) (↑ k)) ≠ 0 := by
+  -- this requires some conditions (p is a prime divisor of n, n has no prime divisors smaller than... etc.)
   sorry
 
+lemma g_subgroup_helper2 : (↑ (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))) ⊆ (Set.compl {0} : Set (bigF p h)) := sorry
 
--- ASK ALAIN: variables?
-section
-  variable {p r : ℕ} [Fact (Nat.Prime p)] {h : Polynomial (ZMod p)} [Fact (Irreducible h)] {h_divides : h ∣ X^r - 1} {A : ℕ}
+-- somehow state that G is a subgroup of the invertible elems bigF
+-- ASK ALAIN
 
-  noncomputable def f : Polynomial (ZMod p) := X^r - 1
+-- Show that f(X^k) = 0, needed for the definition of S (for evaluation of f at X^k to be well-defined)
+lemma helper : (aeval ((AdjoinRoot.root (f p r)) ^ k)) (f p r) = 0 := by
+  let f' : Polynomial (ZMod p) := f p r
+  let α' := AdjoinRoot.root f'
+  show (aeval (α' ^ k)) f' = 0
+  have : (aeval (α' ^ k)) f' = (α' ^ k) ^ r - 1 := by
+    unfold f'
+    unfold f
+    simp only [map_sub, AdjoinRoot.mk_X, map_pow, aeval_X, map_one]
 
-  noncomputable def α : AdjoinRoot (f (p := p) (r := r)) := AdjoinRoot.root f
+  rw [this, ← pow_mul, mul_comm k r, pow_mul]
 
-  noncomputable def H : Submonoid (AdjoinRoot (R := ZMod p) (X^r - 1))
-    := Submonoid.closure
-        {h | ∃ (n : ℕ), n ≤ A ∧ h = α + AdjoinRoot.of f (↑ n)}
+  have : α' ^ r = 1 := by
+    have : α' ^ r - 1 = 0 := by calc
+      α' ^ r - 1 = IsAdjoinRoot.map (AdjoinRoot.isAdjoinRoot f') f' := rfl
+      _         = 0 := by simp only [this, AdjoinRoot.isAdjoinRoot_map_eq_mk, AdjoinRoot.mk_self]
+    have : α' ^ r - 1 + 1 = 0 + 1 := congrArg (. + 1) this
+    simp only [sub_add_cancel, zero_add] at this
+    assumption
+  simp [this]
 
-  noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H (A := A))-- what is this homomorphism from and to?
-
-  -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
-  lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd h_divides (α + AdjoinRoot.of f (↑ k)) ≠ 0 := by
-    -- this requires some conditions (p is a prime divisor of n, n has no prime divisors smaller than... etc.)
-    sorry
-
-  lemma g_subgroup_helper2 : (↑ (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))) ⊆ (Set.compl {0} : Set (bigF p h)) := sorry
-
-  -- somehow state that G is a subgroup of the invertible elems bigF
-  -- ASK ALAIN
-
-  -- Show that f(X^k) = 0, needed for the definition of S (for evaluation of f at X^k to be well-defined)
-  lemma helper : (aeval ((AdjoinRoot.root (f (p := p) (r := r))) ^ k)) (f (p := p) (r := r)) = 0 := by
-    let f : Polynomial (ZMod p) := X^r - 1
-    let α := AdjoinRoot.root f
-    show (aeval (α ^ k)) f = 0
-    have : (aeval (α ^ k)) f = (α ^ k) ^ r - 1 := by
-      unfold f
-      simp only [map_sub, AdjoinRoot.mk_X, map_pow, aeval_X, map_one]
-
-    rw [this, ← pow_mul, mul_comm k r, pow_mul]
-
-    have : α ^ r = 1 := by
-      have : α ^ r - 1 = 0 := by calc
-        α ^ r - 1 = IsAdjoinRoot.map (AdjoinRoot.isAdjoinRoot f) f := rfl
-        _         = 0 := by simp only [this, AdjoinRoot.isAdjoinRoot_map_eq_mk, AdjoinRoot.mk_self]
-      have : α ^ r - 1 + 1 = 0 + 1 := congrArg (. + 1) this
-      simp only [sub_add_cancel, zero_add] at this
-      assumption
-    simp [this]
-
-  def S : Set ℕ := {
-    k | ∀ g ∈ H (p := p) (r := r) (A := A),
-      g^k = AdjoinRoot.liftHom f (α^k) helper g
-    }
+def S : Set ℕ := {
+  k | ∀ g ∈ H p r A,
+    g^k = AdjoinRoot.liftHom (f p r) (α p r^k) (helper p r) g
+  }
 
 example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
 
@@ -74,11 +79,11 @@ example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
 #check H
 
 lemma lemma41 (a b : ℕ)
-  (sha : a ∈ S (p := p) (A := A) (r := r))  -- make the variables explicit --> ()
-  (shb : b ∈ S (p := p) (A := A) (r := r))
-  : a*b ∈ S (p := p) (A := A) (r := r) := by
-  show ∀ g ∈ H (p := p) (r := r) (A := A),
-      g^(a*b) = AdjoinRoot.liftHom _ (α^(a*b)) helper g
+  (sha : a ∈ S p r A)  -- make the variables explicit --> ()
+  (shb : b ∈ S p r A)
+  : a*b ∈ S p r A := by
+  show ∀ g ∈ H p r A,
+    g^(a*b) = AdjoinRoot.liftHom (f p r) (α p r^(a*b)) (helper p r) g
 
   intro g hg
   rw [pow_mul, sha, shb]
@@ -95,19 +100,19 @@ lemma lemma41 (a b : ℕ)
   trivial
 
   -- proof of what we actually care about
-  let φ := (AdjoinRoot.liftHom f (α ^ b) helper).comp (AdjoinRoot.liftHom (f (p := p) (r := r)) (α ^ a) helper)
-  let ψ := (AdjoinRoot.liftHom (f (p := p) (r := r)) (α ^ (a * b)) helper)
+  let φ := (AdjoinRoot.liftHom (f _ _) (α _ _ ^ b) (helper p r)).comp (AdjoinRoot.liftHom (f _ _) (α _ _ ^ a) (helper _ _))
+  let ψ := (AdjoinRoot.liftHom (f (p := p) (r := r)) (α _ _ ^ (a * b)) (helper p r))
 
   have : φ = ψ := AdjoinRoot.algHom_ext (by calc
-    _ = (AdjoinRoot.liftHom f (α ^ b) helper) (AdjoinRoot.liftHom (f (p := p) (r := r)) (α ^ a) helper (AdjoinRoot.root f)) := rfl
-    _ = (AdjoinRoot.liftHom f (α ^ b) helper) (α^a) := by (rw[AdjoinRoot.liftHom_root (a := α ^ a) ]; )
-    _ = (AdjoinRoot.liftHom f (α ^ b) helper α)^a := by (simp[AdjoinRoot.liftHom_root]; )
-    _ = (AdjoinRoot.liftHom f (α ^ b) helper (AdjoinRoot.root f))^a := rfl
-    _ = (α ^ b)^a := by rw[AdjoinRoot.liftHom_root]
-    _ = α^(b*a) := by simp[pow_mul]
-    _ = α^(a*b) := by simp[mul_comm]
-    _ = (AdjoinRoot.liftHom f (α ^ (a * b)) helper) (AdjoinRoot.root _) := by simp only [AdjoinRoot.liftHom_root]
-    _ = ψ (AdjoinRoot.root f) := rfl
+    _ = (AdjoinRoot.liftHom (f _ _) (α _ _ ^ b) (helper _ _)) (AdjoinRoot.liftHom (f _ _) (α _ _ ^ a) (helper p r) (AdjoinRoot.root (f _ _))) := rfl
+    _ = (AdjoinRoot.liftHom (f _ _) (α _ _ ^ b) (helper _ _)) (α _ _^a) := by (rw[AdjoinRoot.liftHom_root (a := α _ _ ^ a) ]; )
+    _ = (AdjoinRoot.liftHom (f _ _) (α _ _ ^ b) (helper _ _) (α _ _))^a := by (simp[AdjoinRoot.liftHom_root]; )
+    _ = (AdjoinRoot.liftHom (f _ _) (α _ _ ^ b) (helper _ _) (AdjoinRoot.root (f _ _)))^a := rfl
+    _ = (α _ _ ^ b)^a := by rw[AdjoinRoot.liftHom_root]
+    _ = α _ _^(b*a) := by simp[pow_mul]
+    _ = α _ _^(a*b) := by simp[mul_comm]
+    _ = (AdjoinRoot.liftHom (f _ _) (α _ _ ^ (a * b)) (helper _ _)) (AdjoinRoot.root _) := by simp only [AdjoinRoot.liftHom_root]
+    _ = ψ (AdjoinRoot.root (f _ _)) := rfl
     )
 
   calc
@@ -117,18 +122,20 @@ lemma lemma41 (a b : ℕ)
 
 lemma lemma42 (a b : ℕ)
   (hineq : a ≥ b)
-  (ha : a ∈ S (p := p) (A := A) (r := r))
-  (hb : b ∈ S (p := p) (A := A) (r := r))
+  (ha : a ∈ S p r a)
+  (hb : b ∈ S p r a)
   (hab : a ≡ b [MOD r]) :
   a ≡ b [MOD Nat.card (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))] := by -- how many versions of mod there are? is it possible to write is as %?
 
   -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
-  let f : Polynomial (ZMod p) := X^r-1
-  have part1 : ∀ g : Polynomial (Polynomial (ZMod p)), AdjoinRoot.mk f (g.eval (X^a)) = AdjoinRoot.mk f (g.eval (X^b)) := by
+  let f' : Polynomial (ZMod p) := f p r
+  have def_f' : f' = f p r := rfl
+
+  have part1 : ∀ g : Polynomial (Polynomial (ZMod p)), AdjoinRoot.mk f' (g.eval (X^a)) = AdjoinRoot.mk f' (g.eval (X^b)) := by
     intro g
 
     let ab : Polynomial (ZMod p) := X^(a-b)-1
-    have f_dvd_ab : f ∣ ab := by
+    have f_dvd_ab : f' ∣ ab := by
       let k := (a - b)/r
       have : r ∣ a-b := (Nat.modEq_iff_dvd' hineq).mp (Nat.ModEq.symm hab)
       have : r * k = (a-b) := Nat.mul_div_cancel' this
@@ -150,26 +157,25 @@ lemma lemma42 (a b : ℕ)
     have xaxb_dvd_gxagxb : xaxb ∣ g.eval (X^a) - g.eval (X^b)
       := sub_dvd_eval_sub (X^a) (X^b) g
 
-    have : f ∣ g.eval (X^a) - g.eval (X^b)
+    have : f' ∣ g.eval (X^a) - g.eval (X^b)
       := dvd_trans (dvd_trans f_dvd_ab ab_dvd_xaxb) xaxb_dvd_gxagxb
 
     exact eq_of_sub_eq_zero (AdjoinRoot.mk_eq_zero.mpr this)
 
   -- part 2: applying this to elements of H
 
-  have part2 : ∀ g ∈ H (p := p) (A := A) (r := r), g^a = g^b := by
+  have part2 : ∀ g ∈ H p r A, g^a = g^b := by
     intro g hg
     -- ASK ALAIN
     rw [ha, hb] <;> try assumption
     obtain ⟨poly, hp⟩ := AdjoinRoot.mk_surjective g
 
-    have : AdjoinRoot.liftHom f (α^a) helper g = (Polynomial.map (AdjoinRoot.of f) poly).eval (α^a) := by
-      rw [←hp, AdjoinRoot.liftHom_mk (a := α^a) f helper (g := poly), eval_map]
+    have : AdjoinRoot.liftHom f' (α p r^a) (helper _ _) g = (Polynomial.map (AdjoinRoot.of f') poly).eval ((α _ _)^a) := by
+      rw [←hp, AdjoinRoot.liftHom_mk (a := (α _ _)^a) f' (helper _ _) (g := poly), eval_map]
       rfl
 
-    -- ASK ALAIN: problems because of different definitions of f
-    unfold _root_.f
-    unfold f at this
+    unfold f
+    unfold f' at this
     sorry
     -- rw[this]
 
@@ -179,7 +185,7 @@ lemma lemma42 (a b : ℕ)
     _ = AdjoinRoot.algHomOfDvd h_divides (g^b) := by rw[part2]; assumption
     _ = (AdjoinRoot.algHomOfDvd h_divides g)^b := by simp only [map_pow]
 
-  have : ∀ g ∈ G (p := p) (A := A) (r := r) (h := h) (h_divides := h_divides), g^a = g^b := λ g ⟨p, hp, hpg⟩ ↦ by
+  have : ∀ g ∈ G p r h _ A, g^a = g^b := λ g ⟨p, hp, hpg⟩ ↦ by
     have := this p hp
     calc
     g^a = (AdjoinRoot.algHomOfDvd h_divides p)^a := by rw[← hpg]; rfl
@@ -190,10 +196,10 @@ lemma lemma42 (a b : ℕ)
 
 
 lemma lemma42'wrong (a b : ℕ)
-  (ha : a ∈ S (p := p) (A := A) (r := r))
-  (hb : b ∈ S (p := p) (A := A) (r := r))
+  (ha : a ∈ S p r a)
+  (hb : b ∈ S p r a)
   (hab : a = b % r) :
-  a ≡ b [MOD Nat.card (G (h:= h) (A:= A) (p:=p) (h_divides := h_divides))] := by -- how many versions of mod there are? is it possible to write is as %?
+  a ≡ b [MOD Nat.card (G p r h h_divides A)] := by -- how many versions of mod there are? is it possible to write is as %?
   have : ∀ (g : Polynomial ℤ) (u v : ℤ), u - v ∣ (Polynomial.eval u g) - (Polynomial.eval v g) := by -- here there was a mistake and instead of v there was u, correct me if i am wrong
     exact fun g u v ↦ Int.ModEq.dvd rfl -- then the proof does not work?
   let f : Polynomial (ZMod p) := X^r - 1 -- why do we not define p at any point?
