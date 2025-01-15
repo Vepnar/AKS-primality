@@ -1,28 +1,63 @@
 import Mathlib
 open Polynomial
 
-variable (p r : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] (h_divides : h ∣ X^r - 1) (A : ℕ)
+variable (p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
 
--- TODO: this does not result in an irreducible h.
--- for now have h as an assumption
-noncomputable def ZtoZp (p : ℕ) := Polynomial.map (Int.castRingHom (ZMod p))
-noncomputable def extracth (r : ℕ) := ZtoZp r (Polynomial.cyclotomic r ℤ)
+noncomputable def extracth := WfDvdMonoid.exists_irreducible_factor notunit nonzero
+  where
+    -- TODO: make more streamlined
+    coeff_r : (X^r - 1 : (ZMod p)[X]).coeff r = 1 := by
+      simp only [coeff_sub, coeff_X_pow, ↓reduceIte, sub_eq_self, coeff_one,hrnz, ↓reduceIte]
 
-def bigF (p : ℕ) (h : Polynomial (ZMod p))
-:= AdjoinRoot h
+    hdegree : (X^r - 1 : (ZMod p)[X]).natDegree ≥ r := by
+      apply Polynomial.le_natDegree_of_ne_zero
+      simp only [coeff_r, ne_eq, one_ne_zero, not_false_eq_true]
 
-noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] : Field (bigF p h) := by
+    notunit : ¬ IsUnit (X^r-1 : (ZMod p)[X]) := by
+      rw [Polynomial.isUnit_iff]
+      intro ⟨a, ha, ha2⟩
+      have hdegeq := congrArg natDegree ha2
+      have hdegineq := hdegree
+      simp[hdegineq] at hdegeq
+      rw[← hdegeq] at hdegineq
+      have : 0 < r := Nat.zero_lt_of_ne_zero hrnz
+      have : 0 > 0 := by linarith
+      exact Nat.not_succ_le_zero 0 this
+
+    nonzero : X^r-1 ≠ (0 : (ZMod p)[X]) := λ equal ↦ by
+      have := congrArg (Polynomial.eval 0) equal
+      simp[zero_pow hrnz] at this
+
+noncomputable def h := Classical.choose (extracth p r hrnz)
+
+lemma h_irr : Irreducible (h p r hrnz) := by
+  have := (Classical.choose_spec (extracth p r hrnz)).1
+  unfold h
+  assumption
+
+instance h_irreducible : Fact (Irreducible (h p r hrnz)) := by
+  exact Fact.mk (h_irr _ _ _)
+
+lemma h_div : h p r hrnz ∣ X^r-1 := by
+  have := (Classical.choose_spec (extracth p r hrnz)).2
+  unfold h
+  assumption
+
+def 𝔽 := AdjoinRoot (h p r hrnz)
+
+noncomputable instance instFieldBigF : Field (𝔽 p r hrnz) := by
+  haveI : Fact (Irreducible (h p r hrnz)) := h_irreducible p r hrnz
   exact AdjoinRoot.instField
 
-noncomputable instance : Algebra (ZMod p) (bigF p h) := by
-  unfold bigF
+noncomputable instance : Algebra (ZMod p) (𝔽 p r hrnz) := by
+  unfold 𝔽
   infer_instance
 
-noncomputable instance : Finite (bigF p h) := by
-  haveI : Fact (Irreducible h) := by assumption
-  have := AdjoinRoot.powerBasis (f := h) (Irreducible.ne_zero this.elim)
-  haveI : Module.Finite (ZMod p) (bigF p h) := PowerBasis.finite this
-  have := Module.finite_of_finite (ZMod p) (M := bigF p h)
+noncomputable instance : Finite (𝔽 p r hrnz) := by
+  haveI : Fact (Irreducible (h p r hrnz)) := h_irreducible _ _ _
+  have := AdjoinRoot.powerBasis (f := h p r hrnz) (Irreducible.ne_zero this.elim)
+  haveI : Module.Finite (ZMod p) (𝔽 p r hrnz) := PowerBasis.finite this
+  have := Module.finite_of_finite (ZMod p) (M := 𝔽 p r hrnz)
   infer_instance
 
 noncomputable def f : Polynomial (ZMod p) := X^r - 1
@@ -33,14 +68,14 @@ noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure
       {h | ∃ (k : ℕ), k ≤ A ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}
 
-noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H p r A)-- what is this homomorphism from and to?
+noncomputable def G : Submonoid (𝔽 p r hrnz) := Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (H p r A)-- what is this homomorphism from and to?
 
 -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
-lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd h_divides (α p r + AdjoinRoot.of (f p r) (↑ k)) ≠ 0 := by
+lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd (h_div p r hrnz) (α p r + AdjoinRoot.of (f p r) (↑ k)) ≠ 0 := by
   -- this requires some conditions (p is a prime divisor of n, n has no prime divisors smaller than... etc.)
   sorry
 
-lemma g_subgroup_helper2 : (↑ (G p r h h_divides A)) ⊆ (Set.compl {0} : Set (bigF p h)) := sorry
+lemma g_subgroup_helper2 : (↑ (G p r hrnz A)) ⊆ (Set.compl {0} : Set (𝔽 p r hrnz)) := sorry
 
 -- somehow state that G is a subgroup of the invertible elems bigF
 -- ASK ALAIN
@@ -125,7 +160,7 @@ lemma lemma42 (a b : ℕ)
   (ha : a ∈ S p r A)
   (hb : b ∈ S p r A)
   (hab : a ≡ b [MOD r]) :
-  a ≡ b [MOD Nat.card (G p r h h_divides A)] := by
+  a ≡ b [MOD Nat.card (G p r hrnz A)] := by
 
   -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
 
@@ -175,22 +210,22 @@ lemma lemma42 (a b : ℕ)
 
     simp only [this]
 
-  have : ∀ g ∈ H p r A, (AdjoinRoot.algHomOfDvd h_divides g)^a = (AdjoinRoot.algHomOfDvd h_divides g)^b
+  have : ∀ g ∈ H p r A, (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^a = (AdjoinRoot.algHomOfDvd (h_div _ _ _) g)^b
     := λ g hg ↦ calc
-    _ = AdjoinRoot.algHomOfDvd h_divides (g^a) := by simp only [map_pow]
-    _ = AdjoinRoot.algHomOfDvd h_divides (g^b) := by rw[part2]; assumption
-    _ = (AdjoinRoot.algHomOfDvd h_divides g)^b := by simp only [map_pow]
+    _ = AdjoinRoot.algHomOfDvd (h_div _ _ _) (g^a) := by simp only [map_pow]
+    _ = AdjoinRoot.algHomOfDvd (h_div _ _ _) (g^b) := by rw[part2]; assumption
+    _ = (AdjoinRoot.algHomOfDvd (h_div _ _ _) g)^b := by simp only [map_pow]
 
-  have hidk : ∀ g ∈ G p r h h_divides A, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
+  have hidk : ∀ g ∈ G p r hrnz A, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
     have := this q hq
     calc
-    g^a = (AdjoinRoot.algHomOfDvd h_divides q)^a := by rw[← hqg]; rfl
-    _ = (AdjoinRoot.algHomOfDvd h_divides q)^b := this
+    g^a = (AdjoinRoot.algHomOfDvd (h_div _ _ _) q)^a := by rw[← hqg]; rfl
+    _ = (AdjoinRoot.algHomOfDvd (h_div _ _ _) q)^b := this
     _ = g^b := by rw[← hqg]; rfl
 
-  have : ∀ g ∈ G p r h h_divides A, g^(a-b) = 1 := λ g ⟨q, hq, hqg⟩ ↦ by
+  have : ∀ g ∈ G p r hrnz A, g^(a-b) = 1 := λ g ⟨q, hq, hqg⟩ ↦ by
     -- let g' : G p r h h_divides A := ⟨g, ⟨q,hq,hqg⟩⟩
-    haveI : IsRightCancelMul (G p r h h_divides A) := sorry
+    haveI : IsRightCancelMul (G p r hrnz A) := sorry
     have : g^a = g^b := hidk g ⟨q, hq, hqg⟩
     have : g^(a-b) * g^b = 1 * g^b := by
       rw [pow_sub_mul_pow (h := hineq), one_mul, this]
@@ -201,7 +236,7 @@ lemma lemma42 (a b : ℕ)
 
 
 
-  have : ∀ g ∈ G p r h h_divides A, orderOf g ∣ a-b :=
+  have : ∀ g ∈ G p r hrnz A, orderOf g ∣ a-b :=
     sorry
 
 
@@ -225,7 +260,7 @@ lemma lemma42'wrong (a b : ℕ)
   (ha : a ∈ S p r A)
   (hb : b ∈ S p r A)
   (hab : a = b % r) :
-  a ≡ b [MOD Nat.card (G p r h h_divides A)] := by -- how many versions of mod there are? is it possible to write is as %?
+  a ≡ b [MOD Nat.card (G p r hrnz A)] := by -- how many versions of mod there are? is it possible to write is as %?
   have : ∀ (g : Polynomial ℤ) (u v : ℤ), u - v ∣ (Polynomial.eval u g) - (Polynomial.eval v g) := by -- here there was a mistake and instead of v there was u, correct me if i am wrong
     exact fun g u v ↦ Int.ModEq.dvd rfl -- then the proof does not work?
   let f : Polynomial (ZMod p) := X^r - 1 -- why do we not define p at any point?
