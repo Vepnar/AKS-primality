@@ -227,3 +227,25 @@ lemma lemma42'wrong (a b : ℕ)
 
 -- for lemma 43 reduction and degree??
 -- p and n are in S as after that we consider the set of powers... and then we argue something about cardinaily
+
+def no_prime_divisors (n : ℕ) (r : ℕ): Prop :=
+  ∀ p : ℕ, Nat.Prime p → ¬(p ∣ n ∧ p ≤ r)
+
+def isPerfectPower (n : ℤ) (p : ℕ): Prop :=
+  ∃ m : ℤ, m > 1 ∧ p ≥ 2 ∧ m^p = n
+
+-- lemma fun_in_H : ∀ g ∈ H, g = ∏
+
+lemma p_in_S : p ∈ S p r A := by
+  show ∀ g ∈ H p r A, g^p = AdjoinRoot.liftHom _ (α p r^p) (helper _ _) g
+  intro g hg
+  sorry
+
+lemma n_in_S (n r : ℕ ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ isPerfectPower n p) (hhhn : Odd n) : n ∈ S p r A := by
+  show ∀ g ∈ H p r A, g^n = AdjoinRoot.liftHom _ (α p r^n) (helper _ _) g
+  intro g hg
+  rw[dvd_def] at hp
+  cases' hp with c hp
+  rw[hp]
+  rw[pow_mul]
+  sorry
