@@ -35,6 +35,9 @@ noncomputable def H : Submonoid (AdjoinRoot (f p r))
 
 noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H p r A)-- what is this homomorphism from and to?
 
+noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
+  AdjoinRoot.mk (f p r)
+
 -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
 lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd h_divides (α p r + AdjoinRoot.of (f p r) (↑ k)) ≠ 0 := by
   -- this requires some conditions (p is a prime divisor of n, n has no prime divisors smaller than... etc.)
@@ -73,6 +76,30 @@ def S : Set ℕ := {
 
 example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
 
+lemma pinS : p ∈ S p r A := by
+  intro g hg
+
+  have (q : (ZMod p)[X]) : q ^ p = q.comp (X ^ p) := by
+    rw [← Polynomial.expand_char, ZMod.frobenius_zmod]
+    simp
+    exact Polynomial.expand_eq_comp_X_pow p
+
+  have := fun q => congrArg (φ p r) (this q)
+  unfold φ at this
+  simp at this
+  obtain ⟨q, hq⟩ := AdjoinRoot.mk_surjective g
+
+  have := this q
+
+  rw [hq] at this
+  rw[this]
+
+  calc
+  _ = (AdjoinRoot.mk (f p r)) (q.eval₂ C (X ^ p)) := by rfl
+  _ = (AdjoinRoot.mk (f p r)) (q.eval₂ C (X ^ p)) := by rfl
+  _ = (AdjoinRoot.liftHom (f p r) (AdjoinRoot.root (f _ _) ^ p) (helper _ _)) g := by sorry
+  _ = (AdjoinRoot.liftHom (f p r) (AdjoinRoot.root (f _ _) ^ p) (helper _ _)) g := by rfl
+  _ = _ := by rfl
 
 #check Int.castRingHom (ZMod 3)
 
