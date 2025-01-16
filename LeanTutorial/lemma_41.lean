@@ -234,8 +234,7 @@ lemma lemma42 (a b : ℕ)
 
   sorry
 
-
-#check mul_left_inj
+sorry
 
 
 lemma lemma42'wrong (a b : ℕ)
