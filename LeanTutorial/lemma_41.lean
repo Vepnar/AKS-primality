@@ -201,8 +201,12 @@ lemma lemma42 (a b : ℕ)
 
 
 
-  have : ∀ g ∈ G p r h h_divides A, orderOf g ∣ a-b :=
-    sorry
+  have : ∀ g ∈ G p r h h_divides A, orderOf g ∣ a-b := by --substituting names for variables, here for a-b?
+    intro g1
+    intro g2
+    rw[orderOf_dvd_iff_pow_eq_one]
+    exact this g1 g2
+    -- exact fun g a_1 ↦ orderOf_dvd_of_pow_eq_one (this g a_1) This is a shorter version but i wanted to understand it fully
 
 
     -- have : g'^(a-b) * g'^b = 1 * g'^b := by
