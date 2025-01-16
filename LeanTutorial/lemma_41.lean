@@ -35,6 +35,7 @@ noncomputable def H : Submonoid (AdjoinRoot (f p r))
 
 noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H p r A)-- what is this homomorphism from and to?
 
+
 -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
 lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd h_divides (α p r + AdjoinRoot.of (f p r) (↑ k)) ≠ 0 := by
   -- this requires some conditions (p is a prime divisor of n, n has no prime divisors smaller than... etc.)
