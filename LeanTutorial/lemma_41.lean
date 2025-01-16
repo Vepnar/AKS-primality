@@ -247,12 +247,37 @@ def isPerfectPower (n : ℤ) (p : ℕ): Prop :=
 
 --lemma fun_in_H (a : ℕ ) (eₐ : ℕ ) : ∀ g ∈ H, g = ∏₀≤ₐ≤A (X+a) ᵉ := by
 
-lemma p_in_S : p ∈ S p r A := by
-  show ∀ g ∈ H p r A, g^p = AdjoinRoot.liftHom _ (α p r^p) (helper _ _) g
-  intro g hg
-  sorry
+-- HOW TO SHOW G IS A GROUP lemma Ggroup (G p r h h_divides A) : IsSubgroup G := by sorry
 
-lemma n_in_S (n r : ℕ ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ isPerfectPower n p) (hhhn : Odd n) : n ∈ S p r A := by
+noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
+  AdjoinRoot.mk (f p r)
+
+  lemma pinS : p ∈ S p r A := by
+  intro g hg
+
+  have (q : (ZMod p)[X]) : q ^ p = q.comp (X ^ p) := by
+    rw [← Polynomial.expand_char, ZMod.frobenius_zmod]
+    simp
+    exact Polynomial.expand_eq_comp_X_pow p
+
+  have := fun q => congrArg (φ p r) (this q)
+  unfold φ at this
+  simp at this
+  obtain ⟨q, hq⟩ := AdjoinRoot.mk_surjective g
+
+  have := this q
+
+  rw [hq] at this
+  rw[this]
+
+  calc
+  _ = (AdjoinRoot.mk (f p r)) (q.eval₂ C (X ^ p)) := by rfl
+  _ = (AdjoinRoot.mk (f p r)) (q.eval₂ C (X ^ p)) := by rfl
+  _ = (AdjoinRoot.liftHom (f p r) (AdjoinRoot.root (f _ _) ^ p) (helper _ _)) g := by sorry
+  _ = (AdjoinRoot.liftHom (f p r) (AdjoinRoot.root (f _ _) ^ p) (helper _ _)) g := by rfl
+  _ = _ := by rfl
+
+  lemma ninS (n r : ℕ ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ isPerfectPower n p) (hhhn : Odd n) : n ∈ S p r A := by
   show ∀ g ∈ H p r A, g^n = AdjoinRoot.liftHom _ (α p r^n) (helper _ _) g
   intro g hg
   rw[dvd_def] at hp
@@ -260,5 +285,3 @@ lemma n_in_S (n r : ℕ ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ 
   rw[hp]
   rw[pow_mul]
   sorry
-
--- HOW TO SHOW G IS A GROUP lemma Ggroup (G p r h h_divides A) : IsSubgroup G := by sorry
