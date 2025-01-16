@@ -190,22 +190,32 @@ lemma lemma42 (a b : ℕ)
 
   have : ∀ g ∈ G p r h h_divides A, g^(a-b) = 1 := λ g ⟨q, hq, hqg⟩ ↦ by
     -- let g' : G p r h h_divides A := ⟨g, ⟨q,hq,hqg⟩⟩
-    haveI : IsRightCancelMul (G p r h h_divides A) := sorry
+    haveI : IsRightCancelMul (G p r h h_divides A) := by
+      --show ∀ k ∈ G p r h h_divides A, ∀ j ∈ G p r h h_divides A, ∀ o ∈ G p r h h_divides A, k * j = o * j → k = o := by
+      --show k o j : G p r h h_divides A, k * j = o * j → k = o := by
+      refine { mul_right_cancel := ?_ }
+      intro k j o
+      intro hj
+
+      --rw [← mul_left_inj (j⁻¹)] at hj
+      sorry
     have : g^a = g^b := hidk g ⟨q, hq, hqg⟩
     have : g^(a-b) * g^b = 1 * g^b := by
       rw [pow_sub_mul_pow (h := hineq), one_mul, this]
 
-    -- have : g^(a-b) = 1 := mul_right_cancel this
-    -- exact this
-    sorry
-
-
-
+    have : g^(a-b) = 1 := by
+      refine pow_eq_one_iff_modEq.mpr ?_
+      --show ∃ c, ↑(orderOf g) * c = ↑a - ↑b := by
+      --show a ≡ b [MOD orderOf g]
+      rw[Nat.modEq_zero_iff_dvd]
+      rw[orderOf_dvd_iff_pow_eq_one]
+      exact
   have : ∀ g ∈ G p r h h_divides A, orderOf g ∣ a-b := by --substituting names for variables, here for a-b?
     intro g1
     intro g2
     rw[orderOf_dvd_iff_pow_eq_one]
-    exact this g1 g2
+    exact
+
     -- exact fun g a_1 ↦ orderOf_dvd_of_pow_eq_one (this g a_1) This is a shorter version but i wanted to understand it fully
 
 
@@ -223,6 +233,9 @@ lemma lemma42 (a b : ℕ)
 
 
   sorry
+
+
+#check mul_left_inj
 
 
 lemma lemma42'wrong (a b : ℕ)
