@@ -38,6 +38,10 @@ noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOf
 -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
 lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd h_divides (α p r + AdjoinRoot.of (f p r) (↑ k)) ≠ 0 := by
   -- this requires some conditions (p is a prime divisor of n, n has no prime divisors smaller than... etc.)
+  simp
+  by_contra j
+
+  --rw[SubtractionMonoid.neg_eq_of_add] at j
   sorry
 
 lemma g_subgroup_helper2 : (↑ (G p r h h_divides A)) ⊆ (Set.compl {0} : Set (bigF p h)) := sorry
@@ -196,7 +200,6 @@ lemma lemma42 (a b : ℕ)
       refine { mul_right_cancel := ?_ }
       intro k j o
       intro hj
-
       --rw [← mul_left_inj (j⁻¹)] at hj
       sorry
     have : g^a = g^b := hidk g ⟨q, hq, hqg⟩
@@ -227,48 +230,10 @@ lemma lemma42 (a b : ℕ)
     --   exact congrArg (coe) hidk
     -- have : (↑ (g'^(a-b)) : bigF p h) = g^(a-b) := rfl
 
-
-
-
-
-
   sorry
 
 sorry
 
-
-lemma lemma42'wrong (a b : ℕ)
-  (ha : a ∈ S p r A)
-  (hb : b ∈ S p r A)
-  (hab : a = b % r) :
-  a ≡ b [MOD Nat.card (G p r h h_divides A)] := by -- how many versions of mod there are? is it possible to write is as %?
-  have : ∀ (g : Polynomial ℤ) (u v : ℤ), u - v ∣ (Polynomial.eval u g) - (Polynomial.eval v g) := by -- here there was a mistake and instead of v there was u, correct me if i am wrong
-    exact fun g u v ↦ Int.ModEq.dvd rfl -- then the proof does not work?
-  let f : Polynomial (ZMod p) := X^r - 1 -- why do we not define p at any point?
-  let ab : Polynomial (ZMod p) := X^(a-b % r)-1 -- why are we looking at a-b mod r and not a-b [*]
-  have : f ∣ ab := by
-    unfold ab -- what does unfold do?
-    simp [hab] -- why does f divide this?
-  let xaxb : Polynomial (ZMod p) := X^a - X^b
-  have : ab ∣ xaxb := by
-    unfold xaxb
-    unfold ab
-    rw [hab]
-    simp
-    --rw [sub_eq_zero]
-    rw [← hab]
-    --rw [pow_right_inj₀]
-    --rw [pow_inj_mod]
-    --rw [pow_inj_iff_of_orderOf_eq_zero]
-    --rw [← orderOf_dvd_sub_iff_zpow_eq_zpow]
-    --rw [← zpow_mod_orderOf]
-    refine eq_zero_of_eq_zero ?_ (X ^ a - X ^ b) -- arrive at contradiction?
-    sorry
-  sorry
-
-
--- for lemma 43 reduction and degree??
--- p and n are in S as after that we consider the set of powers... and then we argue something about cardinaily
 
 def no_prime_divisors (n : ℕ) (r : ℕ): Prop :=
   ∀ p : ℕ, Nat.Prime p → ¬(p ∣ n ∧ p ≤ r)
@@ -294,3 +259,5 @@ lemma n_in_S (n r : ℕ ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ 
   rw[hp]
   rw[pow_mul]
   sorry
+
+-- HOW TO SHOW G IS A GROUP lemma Ggroup (G p r h h_divides A) : IsSubgroup G := by sorry
