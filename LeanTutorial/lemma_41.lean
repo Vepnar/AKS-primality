@@ -3,52 +3,43 @@ open Polynomial
 
 variable (p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
 
-noncomputable def extracth := WfDvdMonoid.exists_irreducible_factor notunit nonzero
-  where
-    notunit : ¬ IsUnit (Polynomial.cyclotomic r (ZMod p)) := by
-      refine not_isUnit_of_degree_pos (cyclotomic r (ZMod p)) ?_
-      rw [degree_cyclotomic r (ZMod p)]
-      apply WithBot.coe_lt_coe.mpr
-      simp only [Nat.cast_id, Nat.totient_pos]
-      exact Nat.zero_lt_of_ne_zero hrnz
 
-    nonzero : Polynomial.cyclotomic r (ZMod p) ≠ 0 := Polynomial.cyclotomic_ne_zero _ _
+noncomputable def h : (ZMod p)[X] := Polynomial.factor (Polynomial.cyclotomic r (ZMod p))
 
-noncomputable def h : (ZMod p)[X] := Classical.choose (extracth p r hrnz)
+lemma h_irr : Irreducible (h p r) := irreducible_factor (cyclotomic r (ZMod p))
 
-lemma h_irr : Irreducible (h p r hrnz) := by
-  have := (Classical.choose_spec (extracth p r hrnz)).1
-  unfold h
-  assumption
+instance h_irreducible : Fact (Irreducible (h p r)) := by
+  exact Fact.mk (h_irr _ _)
 
-instance h_irreducible : Fact (Irreducible (h p r hrnz)) := by
-  exact Fact.mk (h_irr _ _ _)
+-- somehow, it doesn't see hrnz if I don't explicitly give it as an argument?
+lemma h_div_cyclotomic (hrnz : r ≠ 0) : h p r ∣ Polynomial.cyclotomic r (ZMod p) := by
+  apply factor_dvd_of_not_isUnit
+  refine not_isUnit_of_degree_pos (cyclotomic r (ZMod p)) ?_
+  rw [degree_cyclotomic r (ZMod p)]
+  apply WithBot.coe_lt_coe.mpr
+  simp only [Nat.cast_id, Nat.totient_pos]
+  exact Nat.zero_lt_of_ne_zero hrnz
 
-lemma h_div_cyclotomic : h p r hrnz ∣ Polynomial.cyclotomic r (ZMod p) := by
-  have := (Classical.choose_spec (extracth p r hrnz)).2
-  unfold h
-  assumption
-
-lemma h_div : h p r hrnz ∣ X^r-1 := by
+lemma h_div (hrnz : r ≠ 0) : h p r ∣ X^r-1 := by
   trans Polynomial.cyclotomic r (ZMod p)
   . exact h_div_cyclotomic p r hrnz
   . exact cyclotomic.dvd_X_pow_sub_one r (ZMod p)
 
-def 𝔽 := AdjoinRoot (h p r hrnz)
+def 𝔽 := AdjoinRoot (h p r)
 
-noncomputable instance instFieldBigF : Field (𝔽 p r hrnz) := by
-  haveI : Fact (Irreducible (h p r hrnz)) := h_irreducible p r hrnz
+noncomputable instance instFieldBigF : Field (𝔽 p r) := by
+  haveI : Fact (Irreducible (h p r)) := h_irreducible p r
   exact AdjoinRoot.instField
 
-noncomputable instance : Algebra (ZMod p) (𝔽 p r hrnz) := by
+noncomputable instance : Algebra (ZMod p) (𝔽 p r) := by
   unfold 𝔽
   infer_instance
 
-noncomputable instance : Finite (𝔽 p r hrnz) := by
-  haveI : Fact (Irreducible (h p r hrnz)) := h_irreducible _ _ _
-  have := AdjoinRoot.powerBasis (f := h p r hrnz) (Irreducible.ne_zero this.elim)
-  haveI : Module.Finite (ZMod p) (𝔽 p r hrnz) := PowerBasis.finite this
-  have := Module.finite_of_finite (ZMod p) (M := 𝔽 p r hrnz)
+noncomputable instance : Finite (𝔽 p r) := by
+  haveI : Fact (Irreducible (h p r)) := h_irreducible _ _
+  have := AdjoinRoot.powerBasis (f := h p r) (Irreducible.ne_zero this.elim)
+  haveI : Module.Finite (ZMod p) (𝔽 p r) := PowerBasis.finite this
+  have := Module.finite_of_finite (ZMod p) (M := 𝔽 p r)
   infer_instance
 
 noncomputable def f : Polynomial (ZMod p) := X^r - 1
@@ -59,14 +50,14 @@ noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure
       {h | ∃ (k : ℕ), k ≤ A ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}
 
-noncomputable def G : Submonoid (𝔽 p r hrnz) := Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (H p r A)-- what is this homomorphism from and to?
+noncomputable def G : Submonoid (𝔽 p r) := Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (H p r A)-- what is this homomorphism from and to?
 
 -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
 lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd (h_div p r hrnz) (α p r + AdjoinRoot.of (f p r) (↑ k)) ≠ 0 := by
   -- this requires some conditions (p is a prime divisor of n, n has no prime divisors smaller than... etc.)
   sorry
 
-lemma g_subgroup_helper2 : (↑ (G p r hrnz A)) ⊆ (Set.compl {0} : Set (𝔽 p r hrnz)) := sorry
+lemma g_subgroup_helper2 : (↑ (G p r hrnz A)) ⊆ (Set.compl {0} : Set (𝔽 p r)) := sorry
 
 -- somehow state that G is a subgroup of the invertible elems bigF
 -- ASK ALAIN
@@ -154,7 +145,6 @@ lemma lemma42 (a b : ℕ)
   a ≡ b [MOD Nat.card (G p r hrnz A)] := by
 
   -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
-
   have part1 : ∀ g : Polynomial (Polynomial (ZMod p)), AdjoinRoot.mk (f p r) (g.eval (X^a)) = AdjoinRoot.mk (f p r) (g.eval (X^b)) := by
     intro g
 
@@ -201,17 +191,17 @@ lemma lemma42 (a b : ℕ)
 
     simp only [this]
 
-  have : ∀ g ∈ H p r A, (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^a = (AdjoinRoot.algHomOfDvd (h_div _ _ _) g)^b
+  have : ∀ g ∈ H p r A, (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^a = (AdjoinRoot.algHomOfDvd (h_div _ _ hrnz) g)^b
     := λ g hg ↦ calc
-    _ = AdjoinRoot.algHomOfDvd (h_div _ _ _) (g^a) := by simp only [map_pow]
-    _ = AdjoinRoot.algHomOfDvd (h_div _ _ _) (g^b) := by rw[part2]; assumption
-    _ = (AdjoinRoot.algHomOfDvd (h_div _ _ _) g)^b := by simp only [map_pow]
+    _ = AdjoinRoot.algHomOfDvd (h_div _ _ hrnz) (g^a) := by simp only [map_pow]
+    _ = AdjoinRoot.algHomOfDvd (h_div _ _ hrnz) (g^b) := by rw[part2]; assumption
+    _ = (AdjoinRoot.algHomOfDvd (h_div _ _ hrnz) g)^b := by simp only [map_pow]
 
   have hidk : ∀ g ∈ G p r hrnz A, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
     have := this q hq
     calc
-    g^a = (AdjoinRoot.algHomOfDvd (h_div _ _ _) q)^a := by rw[← hqg]; rfl
-    _ = (AdjoinRoot.algHomOfDvd (h_div _ _ _) q)^b := this
+    g^a = (AdjoinRoot.algHomOfDvd (h_div _ _ hrnz) q)^a := by rw[← hqg]; rfl
+    _ = (AdjoinRoot.algHomOfDvd (h_div _ _ hrnz) q)^b := this
     _ = g^b := by rw[← hqg]; rfl
 
   have : ∀ g ∈ G p r hrnz A, g^(a-b) = 1 := λ g ⟨q, hq, hqg⟩ ↦ by
@@ -245,7 +235,6 @@ lemma lemma42 (a b : ℕ)
 
 
   sorry
-
 
 lemma lemma42'wrong (a b : ℕ)
   (ha : a ∈ S p r A)
