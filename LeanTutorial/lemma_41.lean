@@ -252,3 +252,19 @@ lemma n_in_S (n r : ℕ ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ 
   rw[hp]
   rw[pow_mul]
   sorry
+
+def R : ℕ := sorry
+
+lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk h g ∈ G p r h h_divides A) (hq : AdjoinRoot.mk h q ∈ G p r h h_divides A)
+  (hmod : AdjoinRoot.mk h g = AdjoinRoot.mk h q)
+  (hdegg : Polynomial.degree g < R) (hdegq : Polynomial.degree q < R)
+  : g = q := by
+  let Δ := g - q
+  have hΔmod : ∀ k ∈ S p r A, AdjoinRoot.mk h (Δ.comp X^k) = 0
+  intro X
+
+
+
+
+  --rw [hmod, AdjoinRoot.mk_sub],
+  --exact sub_self _, modular equality??
