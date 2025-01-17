@@ -101,13 +101,6 @@ def S : Set ℕ := {
     g^k = AdjoinRoot.liftHom (f _ _) (α _ _^k) (helper _ _) g
   }
 
-example : ℤ →+* (ZMod p) := by exact Int.castRingHom (ZMod p)
-
-
-#check Int.castRingHom (ZMod 3)
-
-#check H
-
 lemma lemma41 (a b : ℕ)
   (sha : a ∈ S p r A)  -- make the variables explicit --> ()
   (shb : b ∈ S p r A)
@@ -261,16 +254,16 @@ def no_prime_divisors (n : ℕ) (r : ℕ): Prop :=
 def isPerfectPower (n : ℤ) (p : ℕ): Prop :=
   ∃ m : ℤ, m > 1 ∧ p ≥ 2 ∧ m^p = n
 
---noncomputable def polH (a : ℤ ) : Polynomial ℤ := X + Poly.const a
+--noncomputable def polH (a : ℤ) : Polynomial ℤ := X + Poly.const a
 
---lemma fun_in_H (a : ℕ ) (eₐ : ℕ ) : ∀ g ∈ H, g = ∏₀≤ₐ≤A (X+a) ᵉ := by
+--lemma fun_in_H (a : ℕ) (eₐ : ℕ) : ∀ g ∈ H, g = ∏₀≤ₐ≤A (X+a) ᵉ := by
 
 -- HOW TO SHOW G IS A GROUP lemma Ggroup (G p r h (h_div p r hrnz) A) : IsSubgroup G := by sorry
 
 noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
   AdjoinRoot.mk (f p r)
 
-  lemma pinS : p ∈ S p r A := by
+lemma pinS : p ∈ S p r A := by
   intro g hg
 
   have (q : (ZMod p)[X]) : q ^ p = q.comp (X ^ p) := by
@@ -295,7 +288,7 @@ noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
   _ = (AdjoinRoot.liftHom (f p r) (AdjoinRoot.root (f _ _) ^ p) (helper _ _)) g := by rfl
   _ = _ := by rfl
 
-  lemma ninS (n r : ℕ ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ isPerfectPower n p) (hhhn : Odd n) : n ∈ S p r A := by
+lemma ninS (n r : ℕ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ isPerfectPower n p) (hhhn : Odd n) : n ∈ S p r A := by
   show ∀ g ∈ H p r A, g^n = AdjoinRoot.liftHom _ (α p r^n) (helper _ _) g
   intro g hg
   rw[dvd_def] at hp
