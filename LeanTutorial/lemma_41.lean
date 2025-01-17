@@ -34,22 +34,33 @@ noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure
       {h | ∃ (k : ℕ), k ≤ A ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}
 
-noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H p r A)-- what is this homomorphism from and to?
+noncomputable def Gmonoid : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H p r A)-- what is this homomorphism from and to?
 --Remark - this is a type submonoid, but we want a type set tp find a subgroup
 
--- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
-lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd h_divides (α p r + AdjoinRoot.of (f p r) (↑ k)) ≠ 0 := by
-  -- this requires some conditions (p is a prime divisor of n, n has no prime divisors smaller than... etc.)
-  simp
-  by_contra j
+-- our Gmonoid has type submonoid,but it is easier to proof that it is a subgroup if we set it to a type set, but we will work around it for now
+def G : Subgroup (bigF p h)ˣ where
+  carrier := {x | ↑ x ∈ (Gmonoid p r h h_divides A)}  -- we would need to prove that all elements in G are nonzero, so we can prove a bijection between g and groupG
+  mul_mem' := by
+    rintro k j ok oj -- use g has type submonoid
+    simp at ok oj ⊢
+    exact Submonoid.mul_mem (Gmonoid p r h h_divides A) ok oj
+  one_mem' := by
+    simp
+    exact Submonoid.one_mem (Gmonoid p r h h_divides A)
+  inv_mem' := by
+    rintro u t
+    have hu : IsOfFinOrder u := by
+      exact isOfFinOrder_of_finite u
+    have w := IsOfFinOrder.val_inv_unit hu
+    simp at w
+    rw[w]
+    apply Submonoid.pow_mem
+    exact t
+    -- G is a finite subset, so any x to some power must be 1
 
-  --rw[SubtractionMonoid.neg_eq_of_add] at j
-  sorry
-
-lemma g_subgroup_helper2 : (↑ (G p r h h_divides A)) ⊆ (Set.compl {0} : Set (bigF p h)) := sorry
-
--- somehow state that G is a subgroup of the invertible elems bigF
--- ASK ALAIN
+--IsOfFinOrder.val_inv_unit
+-- for report an alternative way to do it is to change G to be a subset and then prove a monoid and stuff
+-- to proven in S
 
 -- Show that f(X^k) = 0, needed for the definition of S (for evaluation of f at X^k to be well-defined)
 lemma helper : aeval (AdjoinRoot.root (f p r) ^ k) (f p r) = 0 := by
@@ -189,10 +200,12 @@ lemma lemma42 (a b : ℕ)
 
   have hidk : ∀ g ∈ G p r h h_divides A, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
     have := this q hq
-    calc
-    g^a = (AdjoinRoot.algHomOfDvd h_divides q)^a := by rw[← hqg]; rfl
+    have := (calc
+    (rfl.mp (↑ g : bigF p h))^a = (AdjoinRoot.algHomOfDvd h_divides q)^a := by rw[← hqg]; rfl
     _ = (AdjoinRoot.algHomOfDvd h_divides q)^b := this
-    _ = g^b := by rw[← hqg]; rfl
+    _ = (rfl.mp (↑ g : bigF p h))^b := by rw[← hqg]; rfl)
+
+    exact Units.eq_iff.mp this
 
   have : ∀ g ∈ G p r h h_divides A, g^(a-b) = 1 := λ g ⟨q, hq, hqg⟩ ↦ by
     -- let g' : G p r h h_divides A := ⟨g, ⟨q,hq,hqg⟩⟩
@@ -219,7 +232,7 @@ lemma lemma42 (a b : ℕ)
     intro g1
     intro g2
     rw[orderOf_dvd_iff_pow_eq_one]
-    exact
+    sorry
 
     -- exact fun g a_1 ↦ orderOf_dvd_of_pow_eq_one (this g a_1) This is a shorter version but i wanted to understand it fully
 
@@ -234,15 +247,11 @@ lemma lemma42 (a b : ℕ)
 
   sorry
 
-sorry
-
-
 def no_prime_divisors (n : ℕ) (r : ℕ): Prop :=
   ∀ p : ℕ, Nat.Prime p → ¬(p ∣ n ∧ p ≤ r)
 
 def isPerfectPower (n : ℤ) (p : ℕ): Prop :=
   ∃ m : ℤ, m > 1 ∧ p ≥ 2 ∧ m^p = n
-
 
 --noncomputable def polH (a : ℤ ) : Polynomial ℤ := X + Poly.const a
 
@@ -289,7 +298,7 @@ noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
 
 def R : ℕ := sorry
 
-lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk h g ∈ G p r h h_divides A) (hq : AdjoinRoot.mk h q ∈ G p r h h_divides A)
+lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk h g ∈ Gmonoid p r h h_divides A) (hq : AdjoinRoot.mk h q ∈ Gmonoid p r h h_divides A)
   (hmod : AdjoinRoot.mk h g = AdjoinRoot.mk h q)
   (hdegg : Polynomial.degree g < R) (hdegq : Polynomial.degree q < R)
   : g = q := by
@@ -302,31 +311,6 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk h g ∈ G p r h h_
 
   --rw [hmod, AdjoinRoot.mk_sub],
   --exact sub_self _, modular equality??
-
--- our G has type submonoid,but it is easier to proof that it is a subgroup if we set it to a type set, but we will work around it for now
-def Ggroup : Subgroup (bigF p h)ˣ where
-  carrier := {x | ∃ y ∈ (G p r h h_divides A), x = y}  -- we would need to prove that all elements in G are nonzero, so we can prove a bijection between g and groupG
-  mul_mem' := by
-    rintro k j ok oj -- use g has type submonoid
-    simp at ok oj ⊢
-    exact Submonoid.mul_mem (G p r h h_divides A) ok oj
-  one_mem' := by
-    simp
-    exact Submonoid.one_mem (G p r h h_divides A)
-  inv_mem' := by
-    rintro u t
-    have hu : IsOfFinOrder u := by
-      exact isOfFinOrder_of_finite u
-    have w := IsOfFinOrder.val_inv_unit hu
-    simp at w
-    rw[w]
-    apply Submonoid.pow_mem
-    exact t
-    -- Ggroup is a finite subset, so any x to some power must be 1
-
---IsOfFinOrder.val_inv_unit
--- for report an alternative way to do it is to change G to be a subset and then prove a monoid and stuff
--- to proven in S
 
 --SHOW N IN S NOTES FROM A TALK WITH ALAIN
 --submonoid.closure_induction
