@@ -6,6 +6,12 @@ def no_prime_divisors (n : ℕ) (r : ℕ): Prop :=
 def isPerfectPower (n : ℕ) : Prop :=
   ∃ m p : ℕ, m > 1 ∧ p ≥ 2 ∧ m^p = n
 
+-- Continue later
+def last_prop (n r : ℕ) : Prop := ∀ a : ℕ,  1 ≤ a ∧ a ≤ (Nat.sqrt r)*(Nat.log2 n) ∧ True
+
+
+theorem AKS (n r : ℕ)  (hn: n ≥ 2) (hr: r < n) (ho :orderOf (15 : ZMod 6) > (Nat.log2 5)^2):
+    ¬isPerfectPower n ∧ no_prime_divisors n r ∧ last_prop n r ↔ Nat.Prime n := by sorry
 
 -- this is in mathlib: Nat.Prime.dvd_choose_pow_iff
 theorem n_choose_k (p : ℕ) (k : ℕ) (hk1 : k < p) (hk2 : k > 0) (hp : Nat.Prime p)
@@ -34,6 +40,10 @@ lemma todo (n : ℕ) (hn : ¬ Nat.Prime n) : ∃ (p : ℕ), Nat.Prime p ∧ mult
 -- proof based on: https://www.cse.iitk.ac.in/users/manindra/algebra/primality_v6.pdf
 section
   open Polynomial
+  -- Will fix this later
+
+
+
   theorem primality (n : ℕ) (hn : n ≥ 2) (a : ZMod n) (coprime : Invertible a)
     : Nat.Prime n ↔ (X + C a)^n = X^n + C a
     := by
