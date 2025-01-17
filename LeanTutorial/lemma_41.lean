@@ -326,3 +326,12 @@ def Ggroup : Subgroup (bigF p h)ˣ where
 
 --IsOfFinOrder.val_inv_unit
 -- for report an alternative way to do it is to change G to be a subset and then prove a monoid and stuff
+-- to proven in S
+
+--SHOW N IN S NOTES FROM A TALK WITH ALAIN
+--submonoid.closure_induction
+--small s from thm above is {h | ∃ (k : ℕ), k ≤ A ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)} (the one from H)
+--from Alain's notes: we should think of 1 in g ^ n = 1 as 1 is AdjoinRoot.liftHom (f _ _) (α _ _^k) (helper _ _) g
+--define a function p that takes an element of a ring, takes a proof that it is inside of a closure and maps it into a proposition (do not know if it is true or not)
+-- we write by, but actually we construct a function
+-- refine is similar to apply or exact, but can add ?_ for the stuff we havent proven yet
