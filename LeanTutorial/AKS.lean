@@ -3,8 +3,8 @@ import Mathlib
 def no_prime_divisors (n : ℕ) (r : ℕ): Prop :=
   ∀ p : ℕ, Nat.Prime p → ¬(p ∣ n ∧ p ≤ r)
 
-def isPerfectPower (n : ℤ) (p : ℕ): Prop :=
-  ∃ m : ℤ, m > 1 ∧ p ≥ 2 ∧ m^p = n
+def isPerfectPower (n : ℕ) : Prop :=
+  ∃ m p : ℕ, m > 1 ∧ p ≥ 2 ∧ m^p = n
 
 
 -- this is in mathlib: Nat.Prime.dvd_choose_pow_iff
