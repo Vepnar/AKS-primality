@@ -6,7 +6,8 @@ variable (p r : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irred
 -- TODO: this does not result in an irreducible h.
 -- for now have h as an assumption
 noncomputable def ZtoZp (p : ℕ) := Polynomial.map (Int.castRingHom (ZMod p))
-noncomputable def extracth (r : ℕ) := ZtoZp r (Polynomial.cyclotomic r ℤ)
+noncomputable def extracth (r : ℕ) (p : ℕ) := ZtoZp p (Polynomial.cyclotomic r ℤ)
+noncomputable def h.irr := Polynomial.factor (extracth r p)
 
 def bigF (p : ℕ) (h : Polynomial (ZMod p))
 := AdjoinRoot h
@@ -34,7 +35,7 @@ noncomputable def H : Submonoid (AdjoinRoot (f p r))
       {h | ∃ (k : ℕ), k ≤ A ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}
 
 noncomputable def G : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H p r A)-- what is this homomorphism from and to?
-
+--Remark - this is a type submonoid, but we want a type set tp find a subgroup
 
 -- TODO: prove G is a subgroup (enough to show that 0 ∉ G)
 lemma g_subgroup_helper (k : ℕ) (hk : k ≤ A) : AdjoinRoot.algHomOfDvd h_divides (α p r + AdjoinRoot.of (f p r) (↑ k)) ≠ 0 := by
@@ -301,3 +302,27 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk h g ∈ G p r h h_
 
   --rw [hmod, AdjoinRoot.mk_sub],
   --exact sub_self _, modular equality??
+
+-- our G has type submonoid,but it is easier to proof that it is a subgroup if we set it to a type set, but we will work around it for now
+def Ggroup : Subgroup (bigF p h)ˣ where
+  carrier := {x | ∃ y ∈ (G p r h h_divides A), x = y}  -- we would need to prove that all elements in G are nonzero, so we can prove a bijection between g and groupG
+  mul_mem' := by
+    rintro k j ok oj -- use g has type submonoid
+    simp at ok oj ⊢
+    exact Submonoid.mul_mem (G p r h h_divides A) ok oj
+  one_mem' := by
+    simp
+    exact Submonoid.one_mem (G p r h h_divides A)
+  inv_mem' := by
+    rintro u t
+    have hu : IsOfFinOrder u := by
+      exact isOfFinOrder_of_finite u
+    have w := IsOfFinOrder.val_inv_unit hu
+    simp at w
+    rw[w]
+    apply Submonoid.pow_mem
+    exact t
+    -- Ggroup is a finite subset, so any x to some power must be 1
+
+--IsOfFinOrder.val_inv_unit
+-- for report an alternative way to do it is to change G to be a subset and then prove a monoid and stuff
