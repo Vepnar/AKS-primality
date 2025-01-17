@@ -5,30 +5,16 @@ variable (p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
 
 noncomputable def extracth := WfDvdMonoid.exists_irreducible_factor notunit nonzero
   where
-    -- TODO: make more streamlined
-    coeff_r : (X^r - 1 : (ZMod p)[X]).coeff r = 1 := by
-      simp only [coeff_sub, coeff_X_pow, ↓reduceIte, sub_eq_self, coeff_one,hrnz, ↓reduceIte]
+    notunit : ¬ IsUnit (Polynomial.cyclotomic r (ZMod p)) := by
+      refine not_isUnit_of_degree_pos (cyclotomic r (ZMod p)) ?_
+      rw [degree_cyclotomic r (ZMod p)]
+      apply WithBot.coe_lt_coe.mpr
+      simp only [Nat.cast_id, Nat.totient_pos]
+      exact Nat.zero_lt_of_ne_zero hrnz
 
-    hdegree : (X^r - 1 : (ZMod p)[X]).natDegree ≥ r := by
-      apply Polynomial.le_natDegree_of_ne_zero
-      simp only [coeff_r, ne_eq, one_ne_zero, not_false_eq_true]
+    nonzero : Polynomial.cyclotomic r (ZMod p) ≠ 0 := Polynomial.cyclotomic_ne_zero _ _
 
-    notunit : ¬ IsUnit (X^r-1 : (ZMod p)[X]) := by
-      rw [Polynomial.isUnit_iff]
-      intro ⟨a, ha, ha2⟩
-      have hdegeq := congrArg natDegree ha2
-      have hdegineq := hdegree
-      simp[hdegineq] at hdegeq
-      rw[← hdegeq] at hdegineq
-      have : 0 < r := Nat.zero_lt_of_ne_zero hrnz
-      have : 0 > 0 := by linarith
-      exact Nat.not_succ_le_zero 0 this
-
-    nonzero : X^r-1 ≠ (0 : (ZMod p)[X]) := λ equal ↦ by
-      have := congrArg (Polynomial.eval 0) equal
-      simp[zero_pow hrnz] at this
-
-noncomputable def h := Classical.choose (extracth p r hrnz)
+noncomputable def h : (ZMod p)[X] := Classical.choose (extracth p r hrnz)
 
 lemma h_irr : Irreducible (h p r hrnz) := by
   have := (Classical.choose_spec (extracth p r hrnz)).1
@@ -38,10 +24,15 @@ lemma h_irr : Irreducible (h p r hrnz) := by
 instance h_irreducible : Fact (Irreducible (h p r hrnz)) := by
   exact Fact.mk (h_irr _ _ _)
 
-lemma h_div : h p r hrnz ∣ X^r-1 := by
+lemma h_div_cyclotomic : h p r hrnz ∣ Polynomial.cyclotomic r (ZMod p) := by
   have := (Classical.choose_spec (extracth p r hrnz)).2
   unfold h
   assumption
+
+lemma h_div : h p r hrnz ∣ X^r-1 := by
+  trans Polynomial.cyclotomic r (ZMod p)
+  . exact h_div_cyclotomic p r hrnz
+  . exact cyclotomic.dvd_X_pow_sub_one r (ZMod p)
 
 def 𝔽 := AdjoinRoot (h p r hrnz)
 
