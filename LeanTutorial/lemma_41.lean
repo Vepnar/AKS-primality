@@ -1,29 +1,42 @@
 import Mathlib
 open Polynomial
 
-variable (p r : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] (h_divides : h ∣ X^r - 1) (A : ℕ)
+variable (p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
 
--- TODO: this does not result in an irreducible h.
--- for now have h as an assumption
-noncomputable def ZtoZp (p : ℕ) := Polynomial.map (Int.castRingHom (ZMod p))
-noncomputable def extracth (r : ℕ) (p : ℕ) := ZtoZp p (Polynomial.cyclotomic r ℤ)
-noncomputable def h.irr := Polynomial.factor (extracth r p)
+noncomputable def h : (ZMod p)[X] := Polynomial.factor (Polynomial.cyclotomic r (ZMod p))
+lemma h_irr : Irreducible (h p r) := irreducible_factor (cyclotomic r (ZMod p))
+instance h_irreducible : Fact (Irreducible (h p r)) := by
+  exact Fact.mk (h_irr _ _)
 
-def bigF (p : ℕ) (h : Polynomial (ZMod p))
-:= AdjoinRoot h
+-- somehow, it doesn't see hrnz if I don't explicitly give it as an argument?
+lemma h_div_cyclotomic (hrnz : r ≠ 0) : h p r ∣ Polynomial.cyclotomic r (ZMod p) := by
+  apply factor_dvd_of_not_isUnit
+  refine not_isUnit_of_degree_pos (cyclotomic r (ZMod p)) ?_
+  rw [degree_cyclotomic r (ZMod p)]
+  apply WithBot.coe_lt_coe.mpr
+  simp only [Nat.cast_id, Nat.totient_pos]
+  exact Nat.zero_lt_of_ne_zero hrnz
 
-noncomputable instance (p : ℕ) [Fact (Nat.Prime p)] (h : Polynomial (ZMod p)) [Fact (Irreducible h)] : Field (bigF p h) := by
-  exact AdjoinRoot.instField
+lemma h_div (hrnz : r ≠ 0) : h p r ∣ X^r-1 := by
+  trans Polynomial.cyclotomic r (ZMod p)
+  . exact h_div_cyclotomic p r hrnz
+  . exact cyclotomic.dvd_X_pow_sub_one r (ZMod p)
 
-noncomputable instance : Algebra (ZMod p) (bigF p h) := by
-  unfold bigF
+def 𝔽 := AdjoinRoot (h p r)
+
+noncomputable instance : Field (𝔽 p r) := by
+  unfold 𝔽
   infer_instance
 
-noncomputable instance : Finite (bigF p h) := by
-  haveI : Fact (Irreducible h) := by assumption
-  have := AdjoinRoot.powerBasis (f := h) (Irreducible.ne_zero this.elim)
-  haveI : Module.Finite (ZMod p) (bigF p h) := PowerBasis.finite this
-  have := Module.finite_of_finite (ZMod p) (M := bigF p h)
+noncomputable instance : Algebra (ZMod p) (𝔽 p r) := by
+  unfold 𝔽
+  infer_instance
+
+noncomputable instance : Finite (𝔽 p r) := by
+  have : Fact (Irreducible (h p r)) := by infer_instance
+  have := AdjoinRoot.powerBasis (f := h p r) (Irreducible.ne_zero this.elim)
+  haveI : Module.Finite (ZMod p) (𝔽 p r) := PowerBasis.finite this
+  have := Module.finite_of_finite (ZMod p) (M := 𝔽 p r)
   infer_instance
 
 noncomputable def f : Polynomial (ZMod p) := X^r - 1
@@ -34,19 +47,19 @@ noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure
       {h | ∃ (k : ℕ), k ≤ A ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}
 
-noncomputable def Gmonoid : Submonoid (bigF p h) := Submonoid.map (AdjoinRoot.algHomOfDvd h_divides) (H p r A)-- what is this homomorphism from and to?
+noncomputable def Gmonoid : Submonoid (𝔽 p r) := Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (H p r A)-- what is this homomorphism from and to?
 --Remark - this is a type submonoid, but we want a type set tp find a subgroup
 
 -- our Gmonoid has type submonoid,but it is easier to proof that it is a subgroup if we set it to a type set, but we will work around it for now
-def G : Subgroup (bigF p h)ˣ where
-  carrier := {x | ↑ x ∈ (Gmonoid p r h h_divides A)}  -- we would need to prove that all elements in G are nonzero, so we can prove a bijection between g and groupG
+def G : Subgroup (𝔽 p r)ˣ where
+  carrier := {x | ↑ x ∈ (Gmonoid p r hrnz A)}  -- we would need to prove that all elements in G are nonzero, so we can prove a bijection between g and groupG
   mul_mem' := by
     rintro k j ok oj -- use g has type submonoid
     simp at ok oj ⊢
-    exact Submonoid.mul_mem (Gmonoid p r h h_divides A) ok oj
+    exact Submonoid.mul_mem (Gmonoid p r hrnz A) ok oj
   one_mem' := by
     simp
-    exact Submonoid.one_mem (Gmonoid p r h h_divides A)
+    exact Submonoid.one_mem (Gmonoid p r hrnz A)
   inv_mem' := by
     rintro u t
     have hu : IsOfFinOrder u := by
@@ -142,7 +155,7 @@ lemma lemma42 (a b : ℕ)
   (ha : a ∈ S p r A)
   (hb : b ∈ S p r A)
   (hab : a ≡ b [MOD r]) :
-  a ≡ b [MOD Nat.card (G p r h h_divides A)] := by
+  a ≡ b [MOD Nat.card (G p r hrnz A)] := by
 
   -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
 
@@ -192,31 +205,26 @@ lemma lemma42 (a b : ℕ)
 
     simp only [this]
 
-  have : ∀ g ∈ H p r A, (AdjoinRoot.algHomOfDvd h_divides g)^a = (AdjoinRoot.algHomOfDvd h_divides g)^b
+  have : ∀ g ∈ H p r A, (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^a = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^b
     := λ g hg ↦ calc
-    _ = AdjoinRoot.algHomOfDvd h_divides (g^a) := by simp only [map_pow]
-    _ = AdjoinRoot.algHomOfDvd h_divides (g^b) := by rw[part2]; assumption
-    _ = (AdjoinRoot.algHomOfDvd h_divides g)^b := by simp only [map_pow]
+    _ = AdjoinRoot.algHomOfDvd (h_div p r hrnz) (g^a) := by simp only [map_pow]
+    _ = AdjoinRoot.algHomOfDvd (h_div p r hrnz) (g^b) := by rw[part2]; assumption
+    _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^b := by simp only [map_pow]
 
-  have hidk : ∀ g ∈ G p r h h_divides A, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
+  have hidk : ∀ g ∈ G p r hrnz A, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
     have := this q hq
     have := (calc
-    (rfl.mp (↑ g : bigF p h))^a = (AdjoinRoot.algHomOfDvd h_divides q)^a := by rw[← hqg]; rfl
-    _ = (AdjoinRoot.algHomOfDvd h_divides q)^b := this
-    _ = (rfl.mp (↑ g : bigF p h))^b := by rw[← hqg]; rfl)
+    (rfl.mp (↑ g : 𝔽 p r))^a = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q)^a := by rw[← hqg]; rfl
+    _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q)^b := this
+    _ = (rfl.mp (↑ g : 𝔽 p r))^b := by rw[← hqg]; rfl)
 
     exact Units.eq_iff.mp this
 
-  have : ∀ g ∈ G p r h h_divides A, g^(a-b) = 1 := λ g ⟨q, hq, hqg⟩ ↦ by
-    -- let g' : G p r h h_divides A := ⟨g, ⟨q,hq,hqg⟩⟩
-    haveI : IsRightCancelMul (G p r h h_divides A) := by
-      --show ∀ k ∈ G p r h h_divides A, ∀ j ∈ G p r h h_divides A, ∀ o ∈ G p r h h_divides A, k * j = o * j → k = o := by
-      --show k o j : G p r h h_divides A, k * j = o * j → k = o := by
-      refine { mul_right_cancel := ?_ }
-      intro k j o
-      intro hj
-      --rw [← mul_left_inj (j⁻¹)] at hj
-      sorry
+  have : ∀ g ∈ G p r hrnz A, g^(a-b) = 1 := λ g ⟨q, hq, hqg⟩ ↦ by
+    -- let g' : G p r h (h_div p r hrnz) A := ⟨g, ⟨q,hq,hqg⟩⟩
+    haveI : IsRightCancelMul (G p r hrnz A) := by
+      infer_instance
+
     have : g^a = g^b := hidk g ⟨q, hq, hqg⟩
     have : g^(a-b) * g^b = 1 * g^b := by
       rw [pow_sub_mul_pow (h := hineq), one_mul, this]
@@ -228,7 +236,7 @@ lemma lemma42 (a b : ℕ)
       rw[Nat.modEq_zero_iff_dvd]
       rw[orderOf_dvd_iff_pow_eq_one]
       exact
-  have : ∀ g ∈ G p r h h_divides A, orderOf g ∣ a-b := by --substituting names for variables, here for a-b?
+  have : ∀ g ∈ G p r hrnz A, orderOf g ∣ a-b := by --substituting names for variables, here for a-b?
     intro g1
     intro g2
     rw[orderOf_dvd_iff_pow_eq_one]
@@ -240,10 +248,10 @@ lemma lemma42 (a b : ℕ)
     -- have : g'^(a-b) * g'^b = 1 * g'^b := by
     --   simp
 
-    -- have hidk : g'^(a-b) = 1 := mul_right_cancel (a := g'^(a-b)) (G := G p r h h_divides A) this
-    -- have hidk2 : ↑ g'^(a-b) = (↑ 1 : bigF p h) := by
+    -- have hidk : g'^(a-b) = 1 := mul_right_cancel (a := g'^(a-b)) (G := G p r h (h_div p r hrnz) A) this
+    -- have hidk2 : ↑ g'^(a-b) = (↑ 1 : 𝔽 p r) := by
     --   exact congrArg (coe) hidk
-    -- have : (↑ (g'^(a-b)) : bigF p h) = g^(a-b) := rfl
+    -- have : (↑ (g'^(a-b)) : 𝔽 p r) = g^(a-b) := rfl
 
   sorry
 
@@ -257,7 +265,7 @@ def isPerfectPower (n : ℤ) (p : ℕ): Prop :=
 
 --lemma fun_in_H (a : ℕ ) (eₐ : ℕ ) : ∀ g ∈ H, g = ∏₀≤ₐ≤A (X+a) ᵉ := by
 
--- HOW TO SHOW G IS A GROUP lemma Ggroup (G p r h h_divides A) : IsSubgroup G := by sorry
+-- HOW TO SHOW G IS A GROUP lemma Ggroup (G p r h (h_div p r hrnz) A) : IsSubgroup G := by sorry
 
 noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
   AdjoinRoot.mk (f p r)
@@ -298,7 +306,7 @@ noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
 
 def R : ℕ := sorry
 
-lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk h g ∈ Gmonoid p r h h_divides A) (hq : AdjoinRoot.mk h q ∈ Gmonoid p r h h_divides A)
+lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk h g ∈ Gmonoid p r h (h_div p r hrnz) A) (hq : AdjoinRoot.mk h q ∈ Gmonoid p r h (h_div p r hrnz) A)
   (hmod : AdjoinRoot.mk h g = AdjoinRoot.mk h q)
   (hdegg : Polynomial.degree g < R) (hdegq : Polynomial.degree q < R)
   : g = q := by
