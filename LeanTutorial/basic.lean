@@ -3,6 +3,10 @@ open Polynomial
 
 variable (p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
 
+noncomputable def f : Polynomial (ZMod p) := X^r - 1
+-- the element (X mod f) in Z/p[X]/(f)
+noncomputable def α : AdjoinRoot (f p r) := AdjoinRoot.root (f _ _)
+
 noncomputable def h : (ZMod p)[X] := Polynomial.factor (Polynomial.cyclotomic r (ZMod p))
 lemma h_irr : Irreducible (h p r) := irreducible_factor (cyclotomic r (ZMod p))
 instance h_irreducible : Fact (Irreducible (h p r)) := by
@@ -17,7 +21,7 @@ lemma h_div_cyclotomic (hrnz : r ≠ 0) : h p r ∣ Polynomial.cyclotomic r (ZMo
   simp only [Nat.cast_id, Nat.totient_pos]
   exact Nat.zero_lt_of_ne_zero hrnz
 
-lemma h_div (hrnz : r ≠ 0) : h p r ∣ X^r-1 := by
+lemma h_div (hrnz : r ≠ 0) : h p r ∣ f p r := by
   trans Polynomial.cyclotomic r (ZMod p)
   . exact h_div_cyclotomic p r hrnz
   . exact cyclotomic.dvd_X_pow_sub_one r (ZMod p)
@@ -39,9 +43,21 @@ noncomputable instance : Finite (𝔽 p r) := by
   have := Module.finite_of_finite (ZMod p) (M := 𝔽 p r)
   infer_instance
 
-noncomputable def f : Polynomial (ZMod p) := X^r - 1
-
-noncomputable def α : AdjoinRoot (f p r) := AdjoinRoot.root (f _ _)
+lemma order_of_X_in_F (hrnz : r ≠ 0) : orderOf (AdjoinRoot.root (h p r)) = r := by
+  have : r > 0 := Nat.zero_lt_of_ne_zero hrnz
+  apply (orderOf_eq_iff this).mpr
+  constructor
+  . have : AdjoinRoot.root (h p r) ^ r - 1 = 0 := by calc
+          _ = IsAdjoinRoot.map (AdjoinRoot.isAdjoinRoot _) _ := rfl
+          _ = AdjoinRoot.mk (h p r) (X^r-1) := by simp only [this, AdjoinRoot.isAdjoinRoot_map_eq_mk]
+          _ = AdjoinRoot.mk (h p r) (f p r) := by congr
+          _         = 0 := AdjoinRoot.mk_eq_zero.mpr (h_div p r hrnz)
+    have : AdjoinRoot.root (h p r) ^ r - 1 + 1 = 0 + 1 := congrArg (. + 1) this
+    simp only [sub_add_cancel, zero_add] at this
+    assumption
+  . intro m hmltr hmpos eq
+    have : h p r ∣ X^m-1 := sorry -- use AdjoinRoot.mk_eq_zero
+    sorry
 
 noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure

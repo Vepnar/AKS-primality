@@ -14,3 +14,5 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmon
 
   --rw [hmod, AdjoinRoot.mk_sub],
   --exact sub_self _, modular equality??
+
+-- use order_of_X_in_F
