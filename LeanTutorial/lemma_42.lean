@@ -5,6 +5,7 @@ import LeanTutorial.basic
 open Polynomial
 variable (p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
 
+-- TODO: maybe switch a ≡ b [MOD k] to k ∣ a-b (that's what we use in practice anyway).
 lemma lemma42 (a b : ℕ)
   (hineq : a ≥ b)
   (ha : a ∈ S p r A)
@@ -13,24 +14,24 @@ lemma lemma42 (a b : ℕ)
   a ≡ b [MOD Nat.card (G p r hrnz A)] := by
 
   -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
-  have part1 : ∀ g : Polynomial (Polynomial (ZMod p)), AdjoinRoot.mk (f p r) (g.eval (X^a)) = AdjoinRoot.mk (f p r) (g.eval (X^b)) := by
+  have part1 : ∀ g : (ZMod p)[X][X], AdjoinRoot.mk (f p r) (g.eval (X^a)) = AdjoinRoot.mk (f p r) (g.eval (X^b)) := by
     intro g
 
-    let ab : Polynomial (ZMod p) := X^(a-b)-1
-    have f_dvd_ab : (f p r) ∣ ab := by
+    let ab : (ZMod p)[X] := X^(a-b)-1
+    have f_dvd_ab : f p r ∣ ab := by
       let k := (a - b)/r
       have : r ∣ a-b := (Nat.modEq_iff_dvd' hineq).mp (Nat.ModEq.symm hab)
-      have : r * k = (a-b) := Nat.mul_div_cancel' this
+      have : r * k = a-b := Nat.mul_div_cancel' this
       unfold ab
       rw [←this]
-      have := sub_dvd_pow_sub_pow (X^r : Polynomial (ZMod p)) 1 k
+      have := sub_dvd_pow_sub_pow (X^r : (ZMod p)[X]) 1 k
       rw [one_pow, ← pow_mul] at this
       exact this
 
-    let xaxb : Polynomial (ZMod p) := X^a - X^b
+    let xaxb : (ZMod p)[X] := X^a - X^b
     have ab_dvd_xaxb : ab ∣ xaxb := by
-      constructor -- what does this do
-      rotate_left 1 -- what does this do
+      constructor
+      rotate_left 1
       . exact X^b
       . ring_nf
         rw [← pow_add, add_comm b (a-b), Nat.sub_add_cancel hineq]
@@ -39,7 +40,7 @@ lemma lemma42 (a b : ℕ)
     have xaxb_dvd_gxagxb : xaxb ∣ g.eval (X^a) - g.eval (X^b)
       := sub_dvd_eval_sub (X^a) (X^b) g
 
-    have : (f p r) ∣ g.eval (X^a) - g.eval (X^b)
+    have : f p r ∣ g.eval (X^a) - g.eval (X^b)
       := dvd_trans (dvd_trans f_dvd_ab ab_dvd_xaxb) xaxb_dvd_gxagxb
 
     exact eq_of_sub_eq_zero (AdjoinRoot.mk_eq_zero.mpr this)
@@ -51,8 +52,8 @@ lemma lemma42 (a b : ℕ)
 
     have : α p r ^ a = α p r ^ b := calc
       _ = AdjoinRoot.mk (f p r) (X^a) := by rfl
-      _ = AdjoinRoot.mk (f p r) ((X : Polynomial (Polynomial (ZMod p))).eval (X^a)) := by rw [eval_X]
-      _ = AdjoinRoot.mk (f p r) ((X : Polynomial (Polynomial (ZMod p))).eval (X^b)) := part1 X
+      _ = AdjoinRoot.mk (f p r) ((X : (ZMod p)[X][X]).eval (X^a)) := by rw [eval_X]
+      _ = AdjoinRoot.mk (f p r) ((X : (ZMod p)[X][X]).eval (X^b)) := part1 X
       _ = AdjoinRoot.mk (f p r) (X^b) := by rw[eval_X (x := X^b)]
       _ = _ := by rfl
 
@@ -81,13 +82,14 @@ lemma lemma42 (a b : ℕ)
     exact mul_right_cancel this
 
   -- part 4: concluding that #G divides a-b
+  -- switching to g : ↥ G instead of g ∈ G because that's what isCyclic_iff_exists_orderOf_eq_natCard gives you
+  -- maybe should do that everywhere for consistency's sake
   have order_divides_ab : ∀ (g : ↥ (G p r hrnz A)), orderOf g ∣ a-b := by --substituting names for variables, here for a-b?
     intro g
     rw[orderOf_dvd_iff_pow_eq_one]
     have := this (↑ g) (g.property)
     apply SetLike.coe_eq_coe.mp
     exact this
-    -- exact fun g hg ↦ orderOf_dvd_of_pow_eq_one (this g hg) This is a shorter version but i wanted to understand it fully
 
   have : ∃ (g : ↥(G p r hrnz A)), orderOf g = Nat.card (G p r hrnz A) := isCyclic_iff_exists_orderOf_eq_natCard.mp inferInstance
 
@@ -99,4 +101,4 @@ lemma lemma42 (a b : ℕ)
 
   rw [← hg]
   apply Nat.ModEq.symm
-  exact (Nat.modEq_iff_dvd' (by assumption)).mpr this
+  exact (Nat.modEq_iff_dvd' hineq).mpr this
