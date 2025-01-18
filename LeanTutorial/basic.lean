@@ -9,16 +9,19 @@ def is_perfect_power (n : ℕ) : Prop :=
   ∃ m p : ℕ, m > 1 ∧ p ≥ 2 ∧ m^p = n
 
 noncomputable def A (n r : ℕ) : ℕ :=
-  Nat.floor (Real.logb 2 n* Real.sqrt r)
+  ⌊Real.logb 2 n * Real.sqrt r⌋₊
 
 noncomputable def f (p r : ℕ) : Polynomial (ZMod p) := X^r - 1
 -- the element (X mod f) in Z/p[X]/(f)
 noncomputable def α (p r : ℕ): AdjoinRoot (f p r) := AdjoinRoot.root (f _ _)
 
 variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)]
-  (hp : p ∣ n) (hn : no_prime_divisors_below n r) (hhn : ¬ is_perfect_power n) (hhhn : Odd n)
+  (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hnge1 : n > 1)
   (childs_binomial_theorem : ∀ a ∈ Finset.range (A n r + 1),
     (α p r + ↑ a)^n = α p r^n + ↑ a)
+  (hordern : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2 ⌋₊)
+
+noncomputable def d := orderOf (n : ZMod r)
 
 noncomputable def h : (ZMod p)[X] := Polynomial.factor (Polynomial.cyclotomic r (ZMod p))
 lemma h_irr : Irreducible (h p r) := irreducible_factor (cyclotomic r (ZMod p))
@@ -184,6 +187,38 @@ lemma ninS : n ∈ S n p r := by
   . intro x y hx hy hx₂ hy₂
     simp only [map_natCast, map_mul]
     rw [mul_pow,hx₂, hy₂]
+
+
+include hnge1 in
+lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^d n r-1])
+  : b ∈ S n p r := by
+  intro g hg
+
+  have : r ∣ n^d n r - 1 := by
+    suffices (n : ZMod r)^d n r - 1 = 0 by
+      apply (ZMod.natCast_zmod_eq_zero_iff_dvd _ r).mp
+      rw[← this]
+      trans ↑(n^d n r) - 1
+      . refine Nat.cast_pred (Nat.pow_pos ?_)
+        linarith
+      . rw [Nat.cast_pow]
+    unfold d
+    simp [pow_orderOf_eq_one]
+
+include hordern in
+lemma ndivpinS : n/p ∈ S n p r := by
+  let a := n * p^(Nat.totient (n^d n r-1) - 1)
+  let b := n/p
+
+  have : a ≡ b [MOD n^d n r-1] := sorry
+  have : a ∈ S n p r := by
+    unfold a
+    -- oh, we need lemma41
+    -- so we need to restructure stuff so we can depend on that.
+    -- #check lemma41 (S n p r) (ninS n p r _) ?_
+  -- have : n^(d n r) ≡ 1 [MOD r] :=
+  --   by apply?
+  sorry
 
 def R : ℕ := sorry
 
