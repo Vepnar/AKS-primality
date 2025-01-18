@@ -13,7 +13,6 @@ lemma lemma42 (a b : ℕ)
   a ≡ b [MOD Nat.card (G p r hrnz A)] := by
 
   -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
-
   have part1 : ∀ g : Polynomial (Polynomial (ZMod p)), AdjoinRoot.mk (f p r) (g.eval (X^a)) = AdjoinRoot.mk (f p r) (g.eval (X^b)) := by
     intro g
 
@@ -48,7 +47,6 @@ lemma lemma42 (a b : ℕ)
   -- part 2: applying this to elements of H
   have part2 : ∀ g ∈ H p r A, g^a = g^b := by
     intro g hg
-    -- ASK ALAIN
     rw [ha, hb] <;> try assumption
 
     have : α p r ^ a = α p r ^ b := calc
@@ -66,7 +64,8 @@ lemma lemma42 (a b : ℕ)
     _ = AdjoinRoot.algHomOfDvd (h_div p r hrnz) (g^b) := by rw[part2]; assumption
     _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^b := by simp only [map_pow]
 
-  have hidk : ∀ g ∈ G p r hrnz A, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
+  -- part 3: applying this to elements of G
+  have : ∀ g ∈ G p r hrnz A, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
     have := this q hq
     have := (calc
     (rfl.mp (↑ g : 𝔽 p r))^a = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q)^a := by rw[← hqg]; rfl
@@ -75,37 +74,29 @@ lemma lemma42 (a b : ℕ)
 
     exact Units.eq_iff.mp this
 
-  have : ∀ g ∈ G p r hrnz A, g^(a-b) = 1 := λ g ⟨q, hq, hqg⟩ ↦ by
-    -- let g' : G p r h (h_div p r hrnz) A := ⟨g, ⟨q,hq,hqg⟩⟩
-    haveI : IsRightCancelMul (G p r hrnz A) := by
-      infer_instance
-
-    have : g^a = g^b := hidk g ⟨q, hq, hqg⟩
+  have : ∀ g ∈ G p r hrnz A, g^(a-b) = 1 := by
+    intro g hg
     have : g^(a-b) * g^b = 1 * g^b := by
-      rw [pow_sub_mul_pow (h := hineq), one_mul, this]
+      rw [pow_sub_mul_pow (h := hineq), one_mul, this g hg]
+    exact mul_right_cancel this
 
-    have : g^(a-b) = 1 := by
-      refine pow_eq_one_iff_modEq.mpr ?_
-      --show ∃ c, ↑(orderOf g) * c = ↑a - ↑b := by
-      --show a ≡ b [MOD orderOf g]
-      rw[Nat.modEq_zero_iff_dvd]
-      rw[orderOf_dvd_iff_pow_eq_one]
-      exact
-  have : ∀ g ∈ G p r hrnz A, orderOf g ∣ a-b := by --substituting names for variables, here for a-b?
-    intro g1
-    intro g2
+  -- part 4: concluding that #G divides a-b
+  have order_divides_ab : ∀ (g : ↥ (G p r hrnz A)), orderOf g ∣ a-b := by --substituting names for variables, here for a-b?
+    intro g
     rw[orderOf_dvd_iff_pow_eq_one]
-    sorry
+    have := this (↑ g) (g.property)
+    apply SetLike.coe_eq_coe.mp
+    exact this
+    -- exact fun g hg ↦ orderOf_dvd_of_pow_eq_one (this g hg) This is a shorter version but i wanted to understand it fully
 
-    -- exact fun g a_1 ↦ orderOf_dvd_of_pow_eq_one (this g a_1) This is a shorter version but i wanted to understand it fully
+  have : ∃ (g : ↥(G p r hrnz A)), orderOf g = Nat.card (G p r hrnz A) := isCyclic_iff_exists_orderOf_eq_natCard.mp inferInstance
 
+  let g := Classical.choose this
+  have hg : orderOf g = Nat.card (G p r hrnz A) := Classical.choose_spec this
 
-    -- have : g'^(a-b) * g'^b = 1 * g'^b := by
-    --   simp
+  have : orderOf g ∣ a-b
+    := order_divides_ab g
 
-    -- have hidk : g'^(a-b) = 1 := mul_right_cancel (a := g'^(a-b)) (G := G p r h (h_div p r hrnz) A) this
-    -- have hidk2 : ↑ g'^(a-b) = (↑ 1 : 𝔽 p r) := by
-    --   exact congrArg (coe) hidk
-    -- have : (↑ (g'^(a-b)) : 𝔽 p r) = g^(a-b) := rfl
-
-  sorry
+  rw [← hg]
+  apply Nat.ModEq.symm
+  exact (Nat.modEq_iff_dvd' (by assumption)).mpr this
