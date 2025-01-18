@@ -159,12 +159,16 @@ lemma pinS : p ∈ S p r A := by
 
 lemma ninS (n r : ℕ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ isPerfectPower n) (hhhn : Odd n) : n ∈ S p r A := by
   show ∀ g ∈ H p r A, g^n = AdjoinRoot.liftHom _ (α p r^n) (helper _ _) g
-  intro g hg
-  rw[dvd_def] at hp
-  cases' hp with c hp
-  rw[hp]
-  rw[pow_mul]
-  sorry
+  apply Submonoid.closure_induction
+  . intro x ⟨k, hk, hk₂⟩
+    rw [hk₂]
+    simp only [map_natCast, map_add]
+    -- this is just an assumption made on n. should add it to the hypotheses
+    sorry
+  . simp only [one_pow, map_one]
+  . intro x y hx hy hx₂ hy₂
+    simp only [map_natCast, map_mul]
+    rw [mul_pow,hx₂, hy₂]
 
 def R : ℕ := sorry
 
