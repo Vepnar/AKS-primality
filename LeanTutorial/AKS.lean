@@ -1,10 +1,5 @@
 import Mathlib
-
-def no_prime_divisors (n : ℕ) (r : ℕ): Prop :=
-  ∀ p : ℕ, Nat.Prime p → ¬(p ∣ n ∧ p ≤ r)
-
-def isPerfectPower (n : ℕ) : Prop :=
-  ∃ m p : ℕ, m > 1 ∧ p ≥ 2 ∧ m^p = n
+import LeanTutorial.basic
 
 -- Continue later
 def last_prop (n r : ℕ) : Prop := ∀ a : ℕ,  1 ≤ a ∧ a ≤ (Nat.sqrt r)*(Nat.log2 n) ∧ True
