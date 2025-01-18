@@ -6,7 +6,7 @@ def last_prop (n r : ℕ) : Prop := ∀ a : ℕ,  1 ≤ a ∧ a ≤ (Nat.sqrt r)
 
 
 theorem AKS (n r : ℕ)  (hn: n ≥ 2) (hr: r < n) (ho :orderOf (15 : ZMod 6) > (Nat.log2 5)^2):
-    ¬isPerfectPower n ∧ no_prime_divisors n r ∧ last_prop n r ↔ Nat.Prime n := by sorry
+    ¬is_perfect_power n ∧ no_prime_divisors_below n r ∧ last_prop n r ↔ Nat.Prime n := by sorry
 
 -- this is in mathlib: Nat.Prime.dvd_choose_pow_iff
 theorem n_choose_k (p : ℕ) (k : ℕ) (hk1 : k < p) (hk2 : k > 0) (hp : Nat.Prime p)

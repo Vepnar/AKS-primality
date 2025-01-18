@@ -1,11 +1,24 @@
 import Mathlib
 open Polynomial
 
-variable (p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
+-- these definitions are necessary to state our assumptions
+def no_prime_divisors_below (n r : ℕ) : Prop :=
+  ∀ p : ℕ, Nat.Prime p → ¬(p ∣ n ∧ p ≤ r)
 
-noncomputable def f : Polynomial (ZMod p) := X^r - 1
+def is_perfect_power (n : ℕ) : Prop :=
+  ∃ m p : ℕ, m > 1 ∧ p ≥ 2 ∧ m^p = n
+
+noncomputable def A (n r : ℕ) : ℕ :=
+  Nat.floor (Real.logb 2 n* Real.sqrt r)
+
+noncomputable def f (p r : ℕ) : Polynomial (ZMod p) := X^r - 1
 -- the element (X mod f) in Z/p[X]/(f)
-noncomputable def α : AdjoinRoot (f p r) := AdjoinRoot.root (f _ _)
+noncomputable def α (p r : ℕ): AdjoinRoot (f p r) := AdjoinRoot.root (f _ _)
+
+variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)]
+  (hp : p ∣ n) (hn : no_prime_divisors_below n r) (hhn : ¬ is_perfect_power n) (hhhn : Odd n)
+  (childs_binomial_theorem : ∀ a ∈ Finset.range (A n r + 1),
+    (α p r + ↑ a)^n = α p r^n + ↑ a)
 
 noncomputable def h : (ZMod p)[X] := Polynomial.factor (Polynomial.cyclotomic r (ZMod p))
 lemma h_irr : Irreducible (h p r) := irreducible_factor (cyclotomic r (ZMod p))
@@ -13,7 +26,8 @@ instance h_irreducible : Fact (Irreducible (h p r)) := by
   exact Fact.mk (h_irr _ _)
 
 -- somehow, it doesn't see hrnz if I don't explicitly give it as an argument?
-lemma h_div_cyclotomic (hrnz : r ≠ 0) : h p r ∣ Polynomial.cyclotomic r (ZMod p) := by
+include hrnz in
+lemma h_div_cyclotomic : h p r ∣ Polynomial.cyclotomic r (ZMod p) := by
   apply factor_dvd_of_not_isUnit
   refine not_isUnit_of_degree_pos (cyclotomic r (ZMod p)) ?_
   rw [degree_cyclotomic r (ZMod p)]
@@ -21,7 +35,8 @@ lemma h_div_cyclotomic (hrnz : r ≠ 0) : h p r ∣ Polynomial.cyclotomic r (ZMo
   simp only [Nat.cast_id, Nat.totient_pos]
   exact Nat.zero_lt_of_ne_zero hrnz
 
-lemma h_div (hrnz : r ≠ 0) : h p r ∣ f p r := by
+include hrnz in
+lemma h_div : h p r ∣ f p r := by
   trans Polynomial.cyclotomic r (ZMod p)
   . exact h_div_cyclotomic p r hrnz
   . exact cyclotomic.dvd_X_pow_sub_one r (ZMod p)
@@ -43,7 +58,8 @@ noncomputable instance : Finite (𝔽 p r) := by
   have := Module.finite_of_finite (ZMod p) (M := 𝔽 p r)
   infer_instance
 
-lemma order_of_X_in_F (hrnz : r ≠ 0) : orderOf (AdjoinRoot.root (h p r)) = r := by
+include hrnz in
+lemma order_of_X_in_F : orderOf (AdjoinRoot.root (h p r)) = r := by
   have : r > 0 := Nat.zero_lt_of_ne_zero hrnz
   apply (orderOf_eq_iff this).mpr
   constructor
@@ -61,21 +77,21 @@ lemma order_of_X_in_F (hrnz : r ≠ 0) : orderOf (AdjoinRoot.root (h p r)) = r :
 
 noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure
-      {h | ∃ (k : ℕ), k ≤ A ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}
+      {h | ∃ (k : ℕ), k ≤ A n r ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}
 
-noncomputable def Gmonoid : Submonoid (𝔽 p r) := Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (H p r A)-- what is this homomorphism from and to?
+noncomputable def Gmonoid : Submonoid (𝔽 p r) := Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (H n p r)-- what is this homomorphism from and to?
 --Remark - this is a type submonoid, but we want a type set tp find a subgroup
 
 -- our Gmonoid has type submonoid,but it is easier to proof that it is a subgroup if we set it to a type set, but we will work around it for now
 def G : Subgroup (𝔽 p r)ˣ where
-  carrier := {x | ↑ x ∈ (Gmonoid p r hrnz A)}  -- we would need to prove that all elements in G are nonzero, so we can prove a bijection between g and groupG
+  carrier := {x | ↑ x ∈ (Gmonoid n p r hrnz)}  -- we would need to prove that all elements in G are nonzero, so we can prove a bijection between g and groupG
   mul_mem' := by
     rintro k j ok oj -- use g has type submonoid
     simp at ok oj ⊢
-    exact Submonoid.mul_mem (Gmonoid p r hrnz A) ok oj
+    exact Submonoid.mul_mem (Gmonoid n p r hrnz) ok oj
   one_mem' := by
     simp
-    exact Submonoid.one_mem (Gmonoid p r hrnz A)
+    exact Submonoid.one_mem (Gmonoid n p r hrnz)
   inv_mem' := by
     rintro u t
     have hu : IsOfFinOrder u := by
@@ -113,15 +129,9 @@ lemma helper : aeval (AdjoinRoot.root (f p r) ^ k) (f p r) = 0 := by
   simp [this]
 
 def S : Set ℕ := {
-  k | ∀ g ∈ H p r A,
+  k | ∀ g ∈ H n p r,
     g^k = AdjoinRoot.liftHom (f _ _) (α _ _^k) (helper _ _) g
   }
-
-def no_prime_divisors (n : ℕ) (r : ℕ): Prop :=
-  ∀ p : ℕ, Nat.Prime p → ¬(p ∣ n ∧ p ≤ r)
-
-def isPerfectPower (n : ℕ) : Prop :=
-  ∃ m p : ℕ, m > 1 ∧ p ≥ 2 ∧ m^p = n
 
 --noncomputable def polH (a : ℤ) : Polynomial ℤ := X + Poly.const a
 
@@ -132,7 +142,7 @@ def isPerfectPower (n : ℕ) : Prop :=
 noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
   AdjoinRoot.mk (f p r)
 
-lemma pinS : p ∈ S p r A := by
+lemma pinS : p ∈ S n p r := by
   intro g hg
 
   have (q : (ZMod p)[X]) : q ^ p = q.comp (X ^ p) := by
@@ -157,14 +167,19 @@ lemma pinS : p ∈ S p r A := by
   _ = (AdjoinRoot.liftHom (f p r) (AdjoinRoot.root (f _ _) ^ p) (helper _ _)) g := by rfl
   _ = _ := by rfl
 
-lemma ninS (n r : ℕ) (hp : p ∣ n) (hn : no_prime_divisors n r) (hhn : ¬ isPerfectPower n) (hhhn : Odd n) : n ∈ S p r A := by
-  show ∀ g ∈ H p r A, g^n = AdjoinRoot.liftHom _ (α p r^n) (helper _ _) g
+include childs_binomial_theorem in
+lemma ninS : n ∈ S n p r := by
+  show ∀ g ∈ H n p r, g^n = AdjoinRoot.liftHom _ (α p r^n) (helper _ _) g
   apply Submonoid.closure_induction
   . intro x ⟨k, hk, hk₂⟩
     rw [hk₂]
     simp only [map_natCast, map_add]
-    -- this is just an assumption made on n. should add it to the hypotheses
-    sorry
+    rw [childs_binomial_theorem _ (Finset.mem_range_succ_iff.mpr hk)]
+    congr
+    symm
+    calc
+      _ = (AdjoinRoot.liftHom (f p r) (α p r ^ n) (helper _ _)) (AdjoinRoot.root (f p r)) := rfl
+      _ = α p r ^ n := AdjoinRoot.lift_root (helper _ _)
   . simp only [one_pow, map_one]
   . intro x y hx hy hx₂ hy₂
     simp only [map_natCast, map_mul]

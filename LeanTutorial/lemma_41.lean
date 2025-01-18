@@ -2,12 +2,12 @@ import Mathlib
 import LeanTutorial.basic
 open Polynomial
 
-variable (p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
+variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
 lemma lemma41 (a b : ℕ)
-  (sha : a ∈ S p r A)  -- make the variables explicit --> ()
-  (shb : b ∈ S p r A)
-  : a*b ∈ S p r A := by
-  show ∀ g ∈ H p r A,
+  (sha : a ∈ S n p r)  -- make the variables explicit --> ()
+  (shb : b ∈ S n p r)
+  : a*b ∈ S n p r := by
+  show ∀ g ∈ H n p r,
     g^(a*b) = AdjoinRoot.liftHom (f p r) (α p r^(a*b)) (helper p r) g
 
   intro g hg

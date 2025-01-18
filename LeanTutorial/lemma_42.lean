@@ -3,15 +3,15 @@ import LeanTutorial.basic
 -- import LeanTutorial.lemma_41
 
 open Polynomial
-variable (p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
+variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
 
 -- TODO: maybe switch a ≡ b [MOD k] to k ∣ a-b (that's what we use in practice anyway).
 lemma lemma42 (a b : ℕ)
   (hineq : a ≥ b)
-  (ha : a ∈ S p r A)
-  (hb : b ∈ S p r A)
+  (ha : a ∈ S n p r)
+  (hb : b ∈ S n p r)
   (hab : a ≡ b [MOD r]) :
-  a ≡ b [MOD Nat.card (G p r hrnz A)] := by
+  a ≡ b [MOD Nat.card (G n p r hrnz)] := by
 
   -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
   have part1 : ∀ g : (ZMod p)[X][X], AdjoinRoot.mk (f p r) (g.eval (X^a)) = AdjoinRoot.mk (f p r) (g.eval (X^b)) := by
@@ -46,7 +46,7 @@ lemma lemma42 (a b : ℕ)
     exact eq_of_sub_eq_zero (AdjoinRoot.mk_eq_zero.mpr this)
 
   -- part 2: applying this to elements of H
-  have part2 : ∀ g ∈ H p r A, g^a = g^b := by
+  have part2 : ∀ g ∈ H n p r, g^a = g^b := by
     intro g hg
     rw [ha, hb] <;> try assumption
 
@@ -59,14 +59,14 @@ lemma lemma42 (a b : ℕ)
 
     simp only [this]
 
-  have : ∀ g ∈ H p r A, (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^a = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^b
+  have : ∀ g ∈ H n p r, (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^a = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^b
     := λ g hg ↦ calc
     _ = AdjoinRoot.algHomOfDvd (h_div p r hrnz) (g^a) := by simp only [map_pow]
     _ = AdjoinRoot.algHomOfDvd (h_div p r hrnz) (g^b) := by rw[part2]; assumption
     _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^b := by simp only [map_pow]
 
   -- part 3: applying this to elements of G
-  have : ∀ g ∈ G p r hrnz A, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
+  have : ∀ g ∈ G n p r hrnz, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
     have := this q hq
     have := (calc
     (rfl.mp (↑ g : 𝔽 p r))^a = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q)^a := by rw[← hqg]; rfl
@@ -75,7 +75,7 @@ lemma lemma42 (a b : ℕ)
 
     exact Units.eq_iff.mp this
 
-  have : ∀ g ∈ G p r hrnz A, g^(a-b) = 1 := by
+  have : ∀ g ∈ G n p r hrnz, g^(a-b) = 1 := by
     intro g hg
     have : g^(a-b) * g^b = 1 * g^b := by
       rw [pow_sub_mul_pow (h := hineq), one_mul, this g hg]
@@ -84,17 +84,17 @@ lemma lemma42 (a b : ℕ)
   -- part 4: concluding that #G divides a-b
   -- switching to g : ↥ G instead of g ∈ G because that's what isCyclic_iff_exists_orderOf_eq_natCard gives you
   -- maybe should do that everywhere for consistency's sake
-  have order_divides_ab : ∀ (g : ↥ (G p r hrnz A)), orderOf g ∣ a-b := by --substituting names for variables, here for a-b?
+  have order_divides_ab : ∀ (g : ↥ (G n p r hrnz)), orderOf g ∣ a-b := by --substituting names for variables, here for a-b?
     intro g
     rw[orderOf_dvd_iff_pow_eq_one]
     have := this (↑ g) (g.property)
     apply SetLike.coe_eq_coe.mp
     exact this
 
-  have : ∃ (g : ↥(G p r hrnz A)), orderOf g = Nat.card (G p r hrnz A) := isCyclic_iff_exists_orderOf_eq_natCard.mp inferInstance
+  have : ∃ (g : ↥(G n p r hrnz)), orderOf g = Nat.card (G n p r hrnz) := isCyclic_iff_exists_orderOf_eq_natCard.mp inferInstance
 
   let g := Classical.choose this
-  have hg : orderOf g = Nat.card (G p r hrnz A) := Classical.choose_spec this
+  have hg : orderOf g = Nat.card (G n p r hrnz) := Classical.choose_spec this
 
   have : orderOf g ∣ a-b
     := order_divides_ab g
