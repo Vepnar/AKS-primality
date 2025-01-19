@@ -13,17 +13,10 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmon
   intro w -- changed X to w so it is not confused with X variable, you can always change it back
   simp
   intro hX
-  rotate_right 1
-  rw[AdjoinRoot.mk_eq_mk] at hmod
-  rw[dvd_iff_exists_eq_mul_left] at hmod
-  cases' hmod with u uu
-  rw[sub_eq_iff_eq_add] at uu
-  rw[uu]
-  rw[add_left_eq_self]
-  sorry
 
   --rw[dvd_iff_exists_eq_mul_left]
   refine And.symm ⟨?_, ?_⟩
+  show w ≠ 0
   by_contra hw
   -- then since w is in S we have that for all functions g in H g 0 = 1 which does not seem very likely, so maybe that might be the rest of the proof
   sorry
@@ -32,6 +25,15 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmon
   exact hmod
 
 
+  rw[AdjoinRoot.mk_eq_mk] at hmod
+  rw[dvd_iff_exists_eq_mul_left] at hmod
+  cases' hmod with u uu
+  rw[sub_eq_iff_eq_add] at uu
+  rw[uu]
+  rw[add_left_eq_self]
+  have unotzero : u ≠ 0 := by sorry -- since above we will prove that w in S and w = 0 is a contradiction, so 0 is not in S. Unless by def S is positive integers impies that 0 canot be in S, but still this holds
+  simp
+  sorry
 
   --refine ext ?_
   --rintro j
