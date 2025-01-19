@@ -75,8 +75,13 @@ lemma order_of_X_in_F : orderOf (AdjoinRoot.root (h p r)) = r := by
     simp only [sub_add_cancel, zero_add] at this
     assumption
   . intro m hmltr hmpos eq
-    have : h p r ∣ X^m-1 := by exact AdjoinRoot.mk_eq_mk.mp eq -- use AdjoinRoot.mk_eq_zero
+    let xm: Polynomial (ZMod p) := X^m -1
+    have : h p r ∣ xm := by exact AdjoinRoot.mk_eq_mk.mp eq
+    -- h is the root of a cyclotomic polynomial r such that x^m-1 is not a divisor for m < r.
+    -- contradiction with [this, hmltr]. Don't know how to show this.
+    -- I would like to prove this with help of Alain
     sorry
+
 
 noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure
