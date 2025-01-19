@@ -244,6 +244,11 @@ lemma ndivpinS : n/p ∈ S n p r := by
   let k := n^d n r-1
   let a := n * p^(Nat.totient (n^d n r-1) - 1)
   let b := n/p
+  have hb : b * p = n := Nat.div_mul_cancel hp
+
+  have hnpowd : 0 < n ^ d n r - 1 := by
+    have : 1 < n^d n r := Nat.one_lt_pow (ne_of_lt (Nat.zero_lt_of_lt hordern)).symm hnge1
+    exact Nat.zero_lt_sub_of_lt this
 
   have pkcoprime : Nat.Coprime p k := by
     unfold k
@@ -254,15 +259,25 @@ lemma ndivpinS : n/p ∈ S n p r := by
       sorry -- prime divisor of odd number is at least 3
 
   have : (a : ZMod k) = b := by
-    symm
-    unfold b
-    trans n * (p : ZMod k)⁻¹
-    . sorry
-    . unfold a
-      simp
-      congr
-      have : p^(Nat.totient k) ≡ 1 [MOD k] := Nat.ModEq.pow_totient pkcoprime
-      sorry
+    suffices idk : (a : ZMod k) * p = b * p by
+      let pinv := ZMod.inv k p
+      have hpinv : p * pinv = 1 := ZMod.coe_mul_inv_eq_one p pkcoprime
+      have : ((a : ZMod k) * p) * pinv = (b * p) * pinv := congrArg (. * pinv) idk
+      rw [mul_assoc,mul_assoc] at this
+      simp only [hpinv, mul_one] at this
+      exact this
+    unfold a b
+    simp only [Nat.cast_mul, Nat.cast_pow]
+    rw [← Nat.cast_mul (n/p) p, hb, mul_assoc,
+      ← Nat.cast_pow, ← Nat.cast_mul (p ^ _) p, ← pow_succ,
+      Nat.sub_add_cancel (Nat.totient_pos.mpr hnpowd),
+    ]
+    have : (p^(k.totient) : ZMod k) = 1 := by
+      have : (p^k.totient : ZMod k) = (p : ZMod k)^k.totient := rfl
+      have := (ZMod.natCast_eq_natCast_iff (p^k.totient) 1 k).mpr (Nat.ModEq.pow_totient pkcoprime)
+      simp only [Nat.cast_pow, Nat.cast_one] at this
+      exact this
+    simp[this]
 
   have : ((a : ℤ) : ZMod k) = ((b : ℤ) : ZMod k) := by
     simp only [Int.cast_natCast]
