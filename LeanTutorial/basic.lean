@@ -75,7 +75,7 @@ lemma order_of_X_in_F : orderOf (AdjoinRoot.root (h p r)) = r := by
     simp only [sub_add_cancel, zero_add] at this
     assumption
   . intro m hmltr hmpos eq
-    have : h p r ∣ X^m-1 := sorry -- use AdjoinRoot.mk_eq_zero
+    have : h p r ∣ X^m-1 := by exact AdjoinRoot.mk_eq_mk.mp eq -- use AdjoinRoot.mk_eq_zero
     sorry
 
 noncomputable def H : Submonoid (AdjoinRoot (f p r))
