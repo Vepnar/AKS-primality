@@ -209,18 +209,45 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
       . rw [Nat.cast_pow]
     unfold d
     simp [pow_orderOf_eq_one]
+  sorry
 
-include hordern in
+lemma does_this_really_not_exist_yet (a b c : ℤ) (ha : a ∣ b)
+  : a.gcd (b - c) = a.gcd c := by
+  sorry
+
+include hordern hp in
 lemma ndivpinS : n/p ∈ S n p r := by
+  let k := n^d n r-1
   let a := n * p^(Nat.totient (n^d n r-1) - 1)
   let b := n/p
 
-  have : a ≡ b [MOD n^d n r-1] := sorry
-  have : a ∈ S n p r := by
-    unfold a
-    -- oh, we need lemma41
-    -- so we need to restructure stuff so we can depend on that.
-    -- #check lemma41 (S n p r) (ninS n p r _) ?_
+  have pkcoprime : Nat.Coprime p k := by
+    unfold k
+    have pdiv : (p : ℤ) ∣ n^d n r := dvd_pow (Int.ofNat_dvd.mpr hp) (Nat.not_eq_zero_of_lt hordern)
+    suffices : IsCoprime (p : ℤ) k
+    . exact Nat.isCoprime_iff_coprime.mp this
+    . unfold k
+      have : (↑ (n ^ d n r - 1) : ℤ) = (n : ℤ)^d n r - 1 := sorry
+      rw [this]
+      refine Int.isCoprime_iff_gcd_eq_one.mpr ?_
+      rw [does_this_really_not_exist_yet _ _ _ pdiv]
+      exact Int.gcd_one
+
+  have : (a : ZMod k) = b := by
+    symm
+    unfold b
+    trans n * (p : ZMod k)⁻¹
+    . sorry
+    . unfold a
+      simp
+      congr
+      have : p^(Nat.totient k) ≡ 1 [MOD k] := Nat.ModEq.pow_totient pkcoprime
+      sorry
+
+  have : a ∈ S n p r := sorry
+  -- oh, we need lemma41
+  -- so we need to restructure stuff so we can depend on that.
+
   -- have : n^(d n r) ≡ 1 [MOD r] :=
   --   by apply?
   sorry
