@@ -211,11 +211,42 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
     simp [pow_orderOf_eq_one]
   sorry
 
-lemma does_this_really_not_exist_yet (a b c : ℤ) (ha : a ∣ b)
-  : a.gcd (b - c) = a.gcd c := by
-  sorry
+lemma how_about_this (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3)
+  : a.gcd (b-1) = 1 := by
+  let c := b/a
+  have hc : b = a*c := by exact Eq.symm (Nat.mul_div_cancel' ha)
+  have : c ≠ 0 := λ czero ↦ by
+    simp_all only [czero,mul_zero,nonpos_iff_eq_zero, one_ne_zero]
+  have : c ≥ 1 := Nat.one_le_iff_ne_zero.mpr this
+  have : a*(c-1) + a = b := calc
+    _ = a * (c - 1 + 1) := by ring
+    _ = a * c := by congr; exact Nat.sub_add_cancel this
+    _ = b := hc.symm
 
-include hordern hp in
+  have : b-1 = a*(c-1) + a-1 := by congr; exact this.symm
+  rw[this]
+
+  have age1 : a ≥ 1 := by linarith
+
+  let a' := a-1
+  have ha' : a' + 1 = a := by unfold a'; exact Nat.sub_add_cancel age1
+  let a'' := a'-1
+  have ha'' : a'' + 1 = a - 1 := by apply Nat.sub_add_cancel; linarith
+  calc
+  _ = a.gcd ((a * (c - 1) + a - 1) % a) := by rw[← ha', Nat.gcd_add_one, ha', Nat.gcd_comm]
+  _ = a.gcd ((a * (c - 1) + (a - 1)) % a) := by rw[Nat.add_sub_assoc age1]
+  _ = a.gcd (((a - 1) + a * (c - 1)) % a) := by rw[Nat.add_comm (a * (c-1)) (a-1)]
+  _ = a.gcd ((a - 1) % a) := by rw [Nat.add_mul_mod_self_left]
+  _ = a.gcd (a - 1) := by congr; exact Nat.self_sub_mod a 1
+  _ = (a-1).gcd a := by rw [Nat.gcd_comm]
+  _ = (a-1).gcd (a % (a-1)) := by rw[← ha'', Nat.gcd_add_one, ha'', Nat.gcd_comm]
+  _ = a'.gcd ((a' + 1) % a') := by unfold a'; rw[ha']
+  _ = a'.gcd (1 % a') := by congr 1; exact Nat.add_mod_left _ _
+  _ = a'.gcd 1 := by congr; apply Nat.mod_eq_of_lt; linarith
+  _ = 1 := by simp only [Nat.gcd_one_right]
+
+
+include hordern hp hnge1 in
 lemma ndivpinS : n/p ∈ S n p r := by
   let k := n^d n r-1
   let a := n * p^(Nat.totient (n^d n r-1) - 1)
@@ -223,15 +254,11 @@ lemma ndivpinS : n/p ∈ S n p r := by
 
   have pkcoprime : Nat.Coprime p k := by
     unfold k
-    have pdiv : (p : ℤ) ∣ n^d n r := dvd_pow (Int.ofNat_dvd.mpr hp) (Nat.not_eq_zero_of_lt hordern)
-    suffices : IsCoprime (p : ℤ) k
-    . exact Nat.isCoprime_iff_coprime.mp this
-    . unfold k
-      have : (↑ (n ^ d n r - 1) : ℤ) = (n : ℤ)^d n r - 1 := sorry
-      rw [this]
-      refine Int.isCoprime_iff_gcd_eq_one.mpr ?_
-      rw [does_this_really_not_exist_yet _ _ _ pdiv]
-      exact Int.gcd_one
+    apply Nat.coprime_iff_gcd_eq_one.mpr
+    exact how_about_this p (n ^ d n r)
+      (dvd_pow hp (Nat.not_eq_zero_of_lt hordern))
+      (one_le_pow₀ (by linarith))
+      sorry -- prime divisor of odd number is at least 3
 
   have : (a : ZMod k) = b := by
     symm
@@ -244,13 +271,19 @@ lemma ndivpinS : n/p ∈ S n p r := by
       have : p^(Nat.totient k) ≡ 1 [MOD k] := Nat.ModEq.pow_totient pkcoprime
       sorry
 
-  have : a ∈ S n p r := sorry
+  have : ((a : ℤ) : ZMod k) = ((b : ℤ) : ZMod k) := by
+    simp only [Int.cast_natCast]
+    exact this
+
+  have aequivb_inz : a ≡ b [ZMOD k] := (ZMod.intCast_eq_intCast_iff _ _ _).mp this
+
+  have aequivb : a ≡ b [MOD k] := Int.natCast_modEq_iff.mp aequivb_inz
+
+  have ainS : a ∈ S n p r := sorry
   -- oh, we need lemma41
   -- so we need to restructure stuff so we can depend on that.
 
-  -- have : n^(d n r) ≡ 1 [MOD r] :=
-  --   by apply?
-  sorry
+  exact idkhowtonamethis n p r hnge1 a b ainS aequivb
 
 def R : ℕ := sorry
 
