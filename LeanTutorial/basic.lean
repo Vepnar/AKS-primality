@@ -152,32 +152,26 @@ noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
 
 lemma pinS : p ∈ S n p r := by
   intro g hg
-
-  have (q : (ZMod p)[X]) : q ^ p = q.comp (X ^ p) := by
+  have ⟨q, hq⟩ := AdjoinRoot.mk_surjective g
+  rw [← hq]
+  simp only [AdjoinRoot.liftHom_mk]
+  have : q ^ p = q.eval₂ C (X^p) := by
     rw [← Polynomial.expand_char, ZMod.frobenius_zmod]
     simp
-    exact Polynomial.expand_eq_comp_X_pow p
+    rfl
 
-  have := fun q => congrArg (φ p r) (this q)
-  unfold φ at this
-  simp at this
-  obtain ⟨q, hq⟩ := AdjoinRoot.mk_surjective g
-
-  have := this q
-
-  rw [hq] at this
-  rw[this]
+  have idk : (AdjoinRoot.mk (f p r)).comp C = AdjoinRoot.of (f p r)
+  := RingHom.ext AdjoinRoot.mk_C
 
   calc
-  _ = (AdjoinRoot.mk (f p r)) (q.eval₂ C (X ^ p)) := by rfl
-  _ = (AdjoinRoot.mk (f p r)) (q.eval₂ C (X ^ p)) := by rfl
-  _ = (AdjoinRoot.liftHom (f p r) (AdjoinRoot.root (f _ _) ^ p) (helper _ _)) g := by sorry
-  _ = (AdjoinRoot.liftHom (f p r) (AdjoinRoot.root (f _ _) ^ p) (helper _ _)) g := by rfl
-  _ = _ := by rfl
+  _ = AdjoinRoot.mk (f _ _) (q.eval₂ C (X^p)):= by rw[← this]; rfl
+  _ = q.eval₂ ((AdjoinRoot.mk (f _ _)).comp C) (AdjoinRoot.mk (f _ _) (X^p)) := Polynomial.hom_eval₂ _ _ _ _
+  _ = q.eval₂ (AdjoinRoot.of (f _ _)) (AdjoinRoot.root (f _ _)^p) := by simp only [idk,map_pow, AdjoinRoot.mk_X]
+  _ = _ := rfl
 
 include childs_binomial_theorem in
 lemma ninS : n ∈ S n p r := by
-  show ∀ g ∈ H n p r, g^n = AdjoinRoot.liftHom _ (α p r^n) (helper _ _) g
+  show ∀ g ∈ H n p r, g^n = AdjoinRoot.liftHom _ (α _ _^n) (helper _ _) g
   apply Submonoid.closure_induction
   . intro x ⟨k, hk, hk₂⟩
     rw [hk₂]
@@ -186,13 +180,12 @@ lemma ninS : n ∈ S n p r := by
     congr
     symm
     calc
-      _ = (AdjoinRoot.liftHom (f p r) (α p r ^ n) (helper _ _)) (AdjoinRoot.root (f p r)) := rfl
-      _ = α p r ^ n := AdjoinRoot.lift_root (helper _ _)
+      _ = (AdjoinRoot.liftHom (f _ _) (α _ _ ^ n) (helper _ _)) (AdjoinRoot.root (f _ _)) := rfl
+      _ = α _ _ ^ n := AdjoinRoot.lift_root (helper _ _)
   . simp only [one_pow, map_one]
   . intro x y hx hy hx₂ hy₂
     simp only [map_natCast, map_mul]
     rw [mul_pow,hx₂, hy₂]
-
 
 include hnge1 in
 lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^d n r-1])
