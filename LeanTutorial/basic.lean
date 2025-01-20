@@ -187,12 +187,26 @@ lemma ninS : n ∈ S n p r := by
     simp only [map_natCast, map_mul]
     rw [mul_pow,hx₂, hy₂]
 
+lemma poly_div_lemma {R : Type*} [CommRing R] (a b c : ℕ)
+  (modeq : a ≡ b [MOD c]) : (X : R[X])^c - 1 ∣ X^b - X^a := by
+  wlog hba : a ≤ b
+  . have fact : b ≤ a := by refine Nat.le_of_not_ge hba
+    have := this (R := R) b a c modeq.symm fact
+    exact dvd_sub_comm.mp this
+  have : (X : R[X])^b - X^a = (X^(b-a) - 1) * X^a := by
+    have : (b - a) + a = b := by exact Nat.sub_add_cancel hba
+    rw [mul_sub_right_distrib, ← pow_add, this, one_mul]
+  rw [this]
+  apply dvd_mul_of_dvd_left
+  obtain ⟨d, hd⟩ := (Nat.modEq_iff_dvd' hba).mp modeq
+  have := sub_dvd_pow_sub_pow ((X : R[X])^c) 1 d
+  simp only [← pow_mul, ← hd, one_pow] at this
+  exact this
+
 include hnge1 in
 lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^d n r-1])
   : b ∈ S n p r := by
-  intro g hg
-
-  have : r ∣ n^d n r - 1 := by
+  have hrdiv : r ∣ n^d n r - 1 := by
     suffices (n : ZMod r)^d n r - 1 = 0 by
       apply (ZMod.natCast_zmod_eq_zero_iff_dvd _ r).mp
       rw[← this]
@@ -202,7 +216,69 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
       . rw [Nat.cast_pow]
     unfold d
     simp [pow_orderOf_eq_one]
-  sorry
+
+  have step₁ : (X : (ZMod p)[X])^r - 1 ∣ X^(n^d n r - 1) - 1 :=
+    poly_div_lemma 0 (n^d n r -1) r hrdiv.zero_modEq_nat
+
+  have : (X : (ZMod p)[X])^(n^d n r - 1) - 1 ∣ X^b - X^a := poly_div_lemma _ _ _ eqmod
+
+  have halphaab : α p r ^ a = α p r ^ b := by
+    suffices AdjoinRoot.mk (f p r) (X^a) = AdjoinRoot.mk (f p r) (X^b) by
+      simp only [map_pow, AdjoinRoot.mk_X] at this
+      exact this
+    symm
+    apply AdjoinRoot.mk_eq_mk.mpr
+    unfold f
+    trans
+    . exact step₁
+    . exact this
+
+  have (g : (ZMod p)[X][X]) : X^b - X^a ∣ g.eval (X^b) - g.eval (X^a) := sub_dvd_eval_sub (X ^ b) (X ^ a) g
+
+  have : n^d n r ∈ S n p r := sorry -- requires 4.1
+
+  have step₂ (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^n^d n r = g.liftHom (f _ _) (α _ _^n^d n r) (helper _ _) := this _ hg
+
+  have : α p r^n^d n r = α p r := by
+    suffices : AdjoinRoot.mk (f p r) (X^n^d n r) = AdjoinRoot.mk (f _ _) X
+    . simp only [map_pow, AdjoinRoot.mk_X] at this
+      exact this
+    . apply AdjoinRoot.mk_eq_mk.mpr
+      unfold f
+      have := poly_div_lemma (R := ZMod p) 1 (n^d n r) r (by
+        apply (Nat.modEq_iff_dvd' _).mpr
+        exact hrdiv
+        exact one_le_pow₀ (le_of_lt hnge1)
+      )
+      rw [pow_one] at this
+      exact this
+
+  have (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^n^d n r = g := by
+    rw [step₂ _ hg]
+    simp_rw[this]
+    unfold α
+    have := AdjoinRoot.liftHom_eq_algHom (f p r) (AlgHom.id _ (AdjoinRoot (f p r)))
+    simp only [AlgHom.coe_id, id_eq] at this
+    rw [this]
+    simp only [AlgHom.coe_id, id_eq]
+
+  have (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^b = g^a := by
+    wlog hab : a ≤ b
+    . sorry
+    let c : ℕ := sorry
+    have := calc
+    g^b = g^(b - a + a) := sorry
+    _   = g^(b-a) * g^a := by ring
+    _   = g^((n^d n r-1)*c) * g^a := sorry
+    _   = (g^(n^d n r-1))^c * g^a := by ring
+    -- hmm, what if a = 0? Then we'd need to prove that H ⊆ (Zp[X]/f)\*. Given that H maps to G ⊆ F\*, this is true.
+    -- we need that fact anyway.
+
+  intro g hg
+  calc
+  g^b = g^a := this g hg
+  _ = (AdjoinRoot.liftHom (f p r) (α p r ^ a) (helper _ _)) g := ha g hg
+  _ = (AdjoinRoot.liftHom (f p r) (α p r ^ b) (helper _ _)) g := by simp_rw[halphaab]
 
 lemma how_about_this (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3)
   : a.gcd (b-1) = 1 := by
