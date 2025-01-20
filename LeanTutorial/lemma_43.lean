@@ -84,6 +84,8 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmon
   rw[← add_neg_eq_iff_eq_add] at uu
   simp
 
+  have orderX : orderOf (AdjoinRoot.root (h p r)) = r := by sorry
+
   sorry
 
   --refine ext ?_
