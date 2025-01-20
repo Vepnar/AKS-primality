@@ -239,7 +239,26 @@ lemma how_about_this (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3
   _ = 1 := by simp only [Nat.gcd_one_right]
 
 
-include hordern hp hnge1 in
+
+include hp hnodd in
+lemma pge3 : p ≥ 3 := by
+  have pprime : Nat.Prime p := Fact.out
+  have p_odd : Odd p := by
+    exact Odd.of_dvd_nat hnodd hp
+  have h_diff0 : p ≠ 0 := by
+    apply Nat.Prime.ne_zero pprime
+  have h_diff1 : p ≠ 1 := by
+    apply Nat.Prime.ne_one pprime
+  have h_diff2 : p ≠ 2 := by
+    exact Odd.ne_two_of_dvd_nat hnodd hp
+  have hge2 : 2 < p := by
+    apply Nat.two_lt_of_ne h_diff0 h_diff1 h_diff2
+  simp [ge_iff_le]
+  apply Nat.succ_le_of_lt
+  trivial
+
+
+include hordern hp hnge1 hnodd in
 lemma ndivpinS : n/p ∈ S n p r := by
   let k := n^d n r-1
   let a := n * p^(Nat.totient (n^d n r-1) - 1)
@@ -256,7 +275,7 @@ lemma ndivpinS : n/p ∈ S n p r := by
     exact how_about_this p (n ^ d n r)
       (dvd_pow hp (Nat.not_eq_zero_of_lt hordern))
       (one_le_pow₀ (by linarith))
-      sorry -- prime divisor of odd number is at least 3
+      (pge3 n p hp hnodd)
 
   have : (a : ZMod k) = b := by
     suffices idk : (a : ZMod k) * p = b * p by
