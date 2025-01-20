@@ -2,11 +2,12 @@ import Mathlib
 import LeanTutorial.basic
 open Polynomial
 
-variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ) [Fact (n ≥ 1)] -- use a weaker assumption, have a bit more general lemma
+variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n)  [Fact (n ≥ 1)] -- use a weaker assumption, have a bit more general lemma
 
-lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmonoid n p r hrnz) (hq : AdjoinRoot.mk (h p r) q ∈ Gmonoid n p r hrnz)
+lemma lemma43 (g q : Polynomial (ZMod p))
+  (hg : AdjoinRoot.mk (h p r) g ∈ Gmonoid n p r hrnz) (hq : AdjoinRoot.mk (h p r) q ∈ Gmonoid n p r hrnz)
   (hmod : AdjoinRoot.mk (h p r) g = AdjoinRoot.mk (h p r) q)
-  (hdegg : Polynomial.degree g < R) (hdegq : Polynomial.degree q < R)
+  (hdegg : Polynomial.degree g < Nat.card (R n p r hrnz hp hphnnoprdivs)) (hdegq : Polynomial.degree q < Nat.card (R n p r hrnz hp hnnoprdivs))
   : g = q := by
   let Δ := g - q
   have hΔmod : ∀ k ∈ S n p r, AdjoinRoot.mk (h p r) (Δ.comp X^k) = 0
@@ -14,7 +15,9 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmon
   simp
   intro hX
 
-  refine And.symm ⟨?_, ?_⟩
+  constructor
+  . rw[AdjoinRoot.mk_eq_mk] at hmod
+    exact hmod
   show w ≠ 0
   by_contra hw
   rw[hw] at hX
@@ -25,7 +28,6 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmon
   have polinH: AdjoinRoot.root (f p r) + 1 ∈ H n p r := by
     unfold H
     apply Submonoid.subset_closure
-    simp
     unfold α
     use 1
     simp
@@ -38,6 +40,7 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmon
     -- linarith
     simp
     exact Nat.zero_lt_of_ne_zero (by trivial)
+    sorry
   have eqq := by exact (hX polinH)
   have eqq': (AdjoinRoot.mk (f p r)) 1  = (AdjoinRoot.mk (f p r)) 0 := by
     simp
@@ -45,7 +48,8 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmon
 
   have p_ndiv_one : ¬ p ∣ 1 := Nat.Prime.not_dvd_one (inferInstanceAs (Fact (Nat.Prime p))).out
   have : NeZero (1 : AdjoinRoot (f p r)) := by
-    have := NeZero.of_not_dvd _ p_ndiv_one
+    haveI : CharP (AdjoinRoot (f p r)) p := sorry -- TODO
+    have := NeZero.of_not_dvd (AdjoinRoot (f p r)) p_ndiv_one
     simp at *
     assumption
 
@@ -72,19 +76,15 @@ lemma lemma43 (g q : Polynomial (ZMod p)) (hg : AdjoinRoot.mk (h p r) g ∈ Gmon
   -- rw[t] at o2
   -- simp at o2
 
-  rw[AdjoinRoot.mk_eq_mk] at hmod
-  exact hmod
-
-  rw[AdjoinRoot.mk_eq_mk] at hmod
-  rw[dvd_iff_exists_eq_mul_left] at hmod
+  rw[AdjoinRoot.mk_eq_mk, dvd_iff_exists_eq_mul_left] at hmod
   cases' hmod with u uu
   rw[sub_eq_iff_eq_add] at uu
-  rw[uu]
-  rw[add_left_eq_self]
+  rw[uu, add_left_eq_self]
   rw[← add_neg_eq_iff_eq_add] at uu
   simp
 
   have orderX : orderOf (AdjoinRoot.root (h p r)) = r := by sorry
+  -- see cyclotomic.lean eventually
 
   sorry
 

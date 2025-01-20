@@ -82,7 +82,6 @@ lemma order_of_X_in_F : orderOf (AdjoinRoot.root (h p r)) = r := by
     -- I would like to prove this with help of Alain
     sorry
 
-
 noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure
       {h | ∃ (k : ℕ), k ≤ A n r ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}
@@ -92,7 +91,7 @@ noncomputable def Gmonoid : Submonoid (𝔽 p r) := Submonoid.map (AdjoinRoot.al
 
 -- our Gmonoid has type submonoid,but it is easier to proof that it is a subgroup if we set it to a type set, but we will work around it for now
 def G : Subgroup (𝔽 p r)ˣ where
-  carrier := {x | ↑ x ∈ (Gmonoid n p r hrnz)}  -- we would need to prove that all elements in G are nonzero, so we can prove a bijection between g and groupG
+  carrier := {x | ↑ x ∈ Gmonoid n p r hrnz}  -- we would need to prove that all elements in G are nonzero, so we can prove a bijection between g and groupG
   mul_mem' := by
     rintro k j ok oj -- use g has type submonoid
     simp at ok oj ⊢
@@ -138,7 +137,7 @@ lemma helper : aeval (AdjoinRoot.root (f p r) ^ k) (f p r) = 0 := by
 
 def S : Set ℕ := {
   k | ∀ g ∈ H n p r,
-    g^k = AdjoinRoot.liftHom (f _ _) (α _ _^k) (helper _ _) g
+    g^k = g.liftHom (f _ _) (α _ _^k) (helper _ _)
   }
 
 --noncomputable def polH (a : ℤ) : Polynomial ℤ := X + Poly.const a
@@ -171,7 +170,7 @@ lemma pinS : p ∈ S n p r := by
 
 include childs_binomial_theorem in
 lemma ninS : n ∈ S n p r := by
-  show ∀ g ∈ H n p r, g^n = AdjoinRoot.liftHom _ (α _ _^n) (helper _ _) g
+  show ∀ g ∈ H n p r, g^n = g.liftHom _ (α _ _^n) (helper _ _)
   apply Submonoid.closure_induction
   . intro x ⟨k, hk, hk₂⟩
     rw [hk₂]
@@ -180,7 +179,7 @@ lemma ninS : n ∈ S n p r := by
     congr
     symm
     calc
-      _ = (AdjoinRoot.liftHom (f _ _) (α _ _ ^ n) (helper _ _)) (AdjoinRoot.root (f _ _)) := rfl
+      _ = (AdjoinRoot.root (f _ _)).liftHom (f _ _) (α _ _ ^ n) (helper _ _)  := rfl
       _ = α _ _ ^ n := AdjoinRoot.lift_root (helper _ _)
   . simp only [one_pow, map_one]
   . intro x y hx hy hx₂ hy₂
@@ -267,18 +266,19 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
     . sorry
     let c : ℕ := sorry
     have := calc
-    g^b = g^(b - a + a) := sorry
-    _   = g^(b-a) * g^a := by ring
-    _   = g^((n^d n r-1)*c) * g^a := sorry
-    _   = (g^(n^d n r-1))^c * g^a := by ring
+      g^b = g^(b - a + a) := sorry
+      _   = g^(b-a) * g^a := by ring
+      _   = g^((n^d n r-1)*c) * g^a := sorry
+      _   = (g^(n^d n r-1))^c * g^a := by ring
+    sorry
     -- hmm, what if a = 0? Then we'd need to prove that H ⊆ (Zp[X]/f)\*. Given that H maps to G ⊆ F\*, this is true.
     -- we need that fact anyway.
 
   intro g hg
   calc
   g^b = g^a := this g hg
-  _ = (AdjoinRoot.liftHom (f p r) (α p r ^ a) (helper _ _)) g := ha g hg
-  _ = (AdjoinRoot.liftHom (f p r) (α p r ^ b) (helper _ _)) g := by simp_rw[halphaab]
+  _ = g.liftHom (f p r) (α p r ^ a) (helper _ _) := ha g hg
+  _ = g.liftHom (f p r) (α p r ^ b) (helper _ _) := by simp_rw[halphaab]
 
 lemma how_about_this (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3)
   : a.gcd (b-1) = 1 := by
@@ -314,8 +314,6 @@ lemma how_about_this (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3
   _ = a'.gcd 1 := by congr; apply Nat.mod_eq_of_lt; linarith
   _ = 1 := by simp only [Nat.gcd_one_right]
 
-
-
 include hp hnodd in
 lemma pge3 : p ≥ 3 := by
   have pprime : Nat.Prime p := Fact.out
@@ -332,7 +330,6 @@ lemma pge3 : p ≥ 3 := by
   simp [ge_iff_le]
   apply Nat.succ_le_of_lt
   trivial
-
 
 include hordern hp hnge1 hnodd in
 lemma ndivpinS : n/p ∈ S n p r := by
@@ -494,11 +491,3 @@ noncomputable def T : Finset (ℕ × ℕ)
 --   (t := Set.toFinset (R p r n).carrier)
 --   (cardT _ _ _)
 --   (f := ℓ p n)
-
---SHOW N IN S NOTES FROM A TALK WITH ALAIN
---submonoid.closure_induction
---small s from thm above is {h | ∃ (k : ℕ), k ≤ A ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)} (the one from H)
---from Alain's notes: we should think of 1 in g ^ n = 1 as 1 is AdjoinRoot.liftHom (f _ _) (α _ _^k) (helper _ _) g
---define a function p that takes an element of a ring, takes a proof that it is inside of a closure and maps it into a proposition (do not know if it is true or not)
--- we write by, but actually we construct a function
--- refine is similar to apply or exact, but can add ?_ for the stuff we havent proven yet
