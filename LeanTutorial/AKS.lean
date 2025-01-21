@@ -5,36 +5,37 @@ import LeanTutorial.basic
 def last_prop (n r : ℕ) : Prop := ∀ a : ℕ,  1 ≤ a ∧ a ≤ (Nat.sqrt r)*(Nat.log2 n) ∧ True
 
 
-theorem AKS (n r : ℕ)  (hn: n ≥ 2) (hr: r < n) (ho :orderOf (15 : ZMod 6) > (Nat.log2 5)^2):
+theorem AKS (n r : ℕ)  (hn: n ≥ 2) (hr: r < n) (ho : orderOf (15 : ZMod 6) > (Nat.log2 5)^2):
     (¬is_perfect_power n ∧ no_prime_divisors_below n r ∧ last_prop n r )↔ Nat.Prime n := by
     let p : ℕ := sorry
-    haveI : p.Prime := sorry
+    have hrnz : r ≠ 0 := sorry
+    have hp : p ∣ n := sorry
+    haveI : Fact (p.Prime) := sorry
     constructor
-    . intro original
-      cases' original with o1 o2
-      cases' o2 with o2 o3
+    . intro ⟨ hnnotperfpow, hnnoprdivs, last_prop⟩
       -- UPPER BOUND
-      have : ∃ i j I J : ℕ, (n^i * p^j) = (n^I * p^J) [MOD r] := by sorry
-      have : i ∈ S := by sorry -- lemma 4.1
-      have : j ∈ S := by sorry -- lemma 4.1
-      have : I ∈ S := by sorry -- lemma 4.1
-      have : J ∈ S := by sorry -- lemma 4.1
-      have : orderOf G | nⁱ * pʲ - nᴵ * pᴶ := by sorry -- lemma 4.2
-      have : orderOf G ≤ |nⁱ * pʲ - nᴵ * pᴶ| ≤ (n*p)^(√ orderOf R) - 1 < n^(2√ orderOf R)-1 := by sorry -- results above?
-      have Gup : orderOf G ≤ n^(√ orderOf R)-1 := by sorry -- result above with replacing n with n/p as n/p is in S so also that proof
+      -- have : ∃ i j I J : ℕ, (n^i * p^j) ≡ (n^I * p^J) [MOD r] := by sorry
+      -- have : i ∈ S n p r := by sorry -- lemma 4.1
+      -- have : j ∈ S n p r := by sorry -- lemma 4.1
+      -- have : I ∈ S n p r := by sorry -- lemma 4.1
+      -- have : J ∈ S n p r := by sorry -- lemma 4.1
+      -- have : Nat.card G | nⁱ * pʲ - nᴵ * pᴶ := by sorry -- lemma 4.2
+      -- have : Nat.card G ≤ |nⁱ * pʲ - nᴵ * pᴶ| ≤ (n*p)^(√ Nat.card R) - 1 < n^(2√ Nat.card R)-1 := by sorry -- results above?
+      have Gup : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(√ (Nat.card (R n p r hrnz hp hnnoprdivs)))-1 := by sorry -- result above with replacing n with n/p as n/p is in S so also that proof
 
       -- LOWER BOUND
-      have Rd : d ≤ orderOf R := by sorry -- d > (log n )^2, the order of n mod r by assumption? (thats what is in the text)
-      have RB : ⌊√ orderOf R * log n⌋ < orderOf R  := by sorry -- i guess the result above?
-      have : n^(√ orderOf R)-1 < 2^(⌊√ orderOf R * log n⌋ + 1) - 1 ≤ orderOf G := by sorry -- lemma 43
+      have Rd : d ≤ Nat.card (R n p r hrnz hp hnnoprdivs) := by sorry -- d > (log n )^2, the order of n mod r by assumption? (thats what is in the text)
+      have RB : ⌊√ ↑ (Nat.card (R n p r hrnz hp hnnoprdivs)) * Real.logb 2 n⌋ < Nat.card (R n p r hrnz hp hnnoprdivs)  := by sorry -- i guess the result above?
+      have : (n : ℝ)^(√ ↑ (Nat.card (R n p r hrnz hp hnnoprdivs)))-1 < Nat.card (G n p r hrnz) := by sorry -- lemma 43
+
       sorry
 
     . intro nprime
-      refine And.symm ⟨?_ , ?_ ⟩
-      refine And.symm ⟨?_ , ?_ ⟩
-      .sorry
-      .sorry
-      .sorry
+      constructor
+      . sorry
+      constructor
+      . sorry
+      . sorry
 
 -- this is in mathlib: Nat.Prime.dvd_choose_pow_iff
 theorem n_choose_k (p : ℕ) (k : ℕ) (hk1 : k < p) (hk2 : k > 0) (hp : Nat.Prime p)

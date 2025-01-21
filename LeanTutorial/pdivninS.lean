@@ -57,7 +57,7 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
 
   have (g : (ZMod p)[X][X]) : X^b - X^a ∣ g.eval (X^b) - g.eval (X^a) := sub_dvd_eval_sub (X ^ b) (X ^ a) g
 
-  have : n^d n r ∈ S n p r := pow_in_S n p r n (d n r) (ninS n p r childs_binomial_theorem) -- requires 4.1
+  have : n^d n r ∈ S n p r := pow_in_S n p r n (d n r) (ninS n p r childs_binomial_theorem)
 
   have step₂ (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^n^d n r = g.liftHom (f _ _) (α _ _^n^d n r) (helper _ _) := this _ hg
 
