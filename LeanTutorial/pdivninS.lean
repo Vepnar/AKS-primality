@@ -1,9 +1,10 @@
 import Mathlib
 import LeanTutorial.basic
+import LeanTutorial.lemma_41
 open Polynomial
 
 variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)]
-  (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hnge1 : n > 1)
+  (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hn_gt_one : n > 1)
   (childs_binomial_theorem : ∀ a ∈ Finset.range (A n r + 1),
     (α p r + ↑ a)^n = α p r^n + ↑ a)
   (hordern : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2 ⌋₊)
@@ -24,7 +25,7 @@ lemma poly_div_lemma {R : Type*} [CommRing R] (a b c : ℕ)
   simp only [← pow_mul, ← hd, one_pow] at this
   exact this
 
-include hnge1 in
+include hn_gt_one in
 lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^d n r-1])
   : b ∈ S n p r := by
   have hrdiv : r ∣ n^d n r - 1 := by
@@ -69,7 +70,7 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
       have := poly_div_lemma (R := ZMod p) 1 (n^d n r) r (by
         apply (Nat.modEq_iff_dvd' _).mpr
         exact hrdiv
-        exact one_le_pow₀ (le_of_lt hnge1)
+        exact one_le_pow₀ (le_of_lt hn_gt_one)
       )
       rw [pow_one] at this
       exact this
@@ -137,7 +138,7 @@ lemma how_about_this (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3
   _ = a'.gcd 1 := by congr; apply Nat.mod_eq_of_lt; linarith
   _ = 1 := by simp only [Nat.gcd_one_right]
 
-include hordern hp hnge1 hnodd in
+include hordern hp hn_gt_one hnodd in
 lemma ndivpinS : n/p ∈ S n p r := by
   let k := n^d n r-1
   let a := n * p^(k.totient - 1)
@@ -145,8 +146,7 @@ lemma ndivpinS : n/p ∈ S n p r := by
   have hb : b * p = n := Nat.div_mul_cancel hp
 
   have hnpowd : 0 < k := by
-    have : 1 < n^d n r := Nat.one_lt_pow (ne_of_lt (Nat.zero_lt_of_lt hordern)).symm hnge1
-    exact Nat.zero_lt_sub_of_lt this
+    exact Nat.zero_lt_sub_of_lt (n_td_d_gt_one n r hn_gt_one hordern)
 
   have pkcoprime : Nat.Coprime p k := by
     unfold k
@@ -189,4 +189,4 @@ lemma ndivpinS : n/p ∈ S n p r := by
   -- oh, we need lemma41
   -- so we need to restructure stuff so we can depend on that.
 
-  exact idkhowtonamethis n p r hnge1 a b ainS aequivb
+  exact idkhowtonamethis n p r hn_gt_one a b ainS aequivb

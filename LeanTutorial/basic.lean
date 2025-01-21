@@ -16,7 +16,7 @@ noncomputable def f (p r : ℕ) : Polynomial (ZMod p) := X^r - 1
 noncomputable def α (p r : ℕ): AdjoinRoot (f p r) := AdjoinRoot.root (f _ _)
 
 variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)]
-  (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hnge1 : n > 1)
+  (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hn_gt_one : n > 1)
   (childs_binomial_theorem : ∀ a ∈ Finset.range (A n r + 1),
     (α p r + ↑ a)^n = α p r^n + ↑ a)
   (hordern : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2 ⌋₊)
@@ -39,9 +39,13 @@ lemma pge3 : p ≥ 3 := by
   apply Nat.succ_le_of_lt
   trivial
 
--- Definitions and basic lemmas that are necessary
+-- Definitions and basic lemmas that are necessary in many places
 
 noncomputable def d := orderOf (n : ZMod r)
+
+include hordern hn_gt_one in
+lemma n_td_d_gt_one : 1 < n^d n r :=
+  Nat.one_lt_pow (ne_of_lt (Nat.zero_lt_of_lt hordern)).symm hn_gt_one
 
 noncomputable def h : (ZMod p)[X] := Polynomial.factor (Polynomial.cyclotomic r (ZMod p))
 lemma h_irr : Irreducible (h p r) := irreducible_factor (cyclotomic r (ZMod p))
