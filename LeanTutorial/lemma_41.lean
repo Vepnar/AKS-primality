@@ -44,3 +44,19 @@ lemma lemma41 (a b : ℕ)
     _ = φ g := rfl
     _ = ψ g := by rw [this]
     _ = _ := rfl
+
+lemma one_in_S : 1 ∈ S n p r
+  := by
+  intro g hg
+  unfold α
+  simp only [pow_one]
+  have := AdjoinRoot.liftHom_eq_algHom (f p r) (AlgHom.id _ (AdjoinRoot (f p r)))
+  simp only [AlgHom.coe_id, id_eq] at this
+  rw [this]
+  simp only [AlgHom.coe_id, id_eq]
+
+lemma pow_in_S (a b : ℕ) (ha : a ∈ S n p r)
+  : a^b ∈ S n p r := by
+  induction b with
+  | zero => simp; exact (one_in_S _ _ _)
+  | succ hb ih => rw[pow_add,pow_one]; exact lemma41 n p r (a^hb) a ih ha

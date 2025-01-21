@@ -25,7 +25,7 @@ lemma poly_div_lemma {R : Type*} [CommRing R] (a b c : ℕ)
   simp only [← pow_mul, ← hd, one_pow] at this
   exact this
 
-include hn_gt_one in
+include hn_gt_one childs_binomial_theorem in
 lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^d n r-1])
   : b ∈ S n p r := by
   have hrdiv : r ∣ n^d n r - 1 := by
@@ -57,7 +57,7 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
 
   have (g : (ZMod p)[X][X]) : X^b - X^a ∣ g.eval (X^b) - g.eval (X^a) := sub_dvd_eval_sub (X ^ b) (X ^ a) g
 
-  have : n^d n r ∈ S n p r := sorry -- requires 4.1
+  have : n^d n r ∈ S n p r := pow_in_S n p r n (d n r) (ninS n p r childs_binomial_theorem) -- requires 4.1
 
   have step₂ (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^n^d n r = g.liftHom (f _ _) (α _ _^n^d n r) (helper _ _) := this _ hg
 
@@ -138,7 +138,7 @@ lemma how_about_this (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3
   _ = a'.gcd 1 := by congr; apply Nat.mod_eq_of_lt; linarith
   _ = 1 := by simp only [Nat.gcd_one_right]
 
-include hordern hp hn_gt_one hnodd in
+include hordern hp hn_gt_one hnodd childs_binomial_theorem in
 lemma ndivpinS : n/p ∈ S n p r := by
   let k := n^d n r-1
   let a := n * p^(k.totient - 1)
@@ -185,8 +185,11 @@ lemma ndivpinS : n/p ∈ S n p r := by
 
   have aequivb : a ≡ b [MOD k] := Int.natCast_modEq_iff.mp aequivb_inz
 
-  have ainS : a ∈ S n p r := sorry
-  -- oh, we need lemma41
-  -- so we need to restructure stuff so we can depend on that.
+  have ainS : a ∈ S n p r := by
+    unfold a
+    apply lemma41 n p r
+    . exact ninS n p r childs_binomial_theorem
+    . apply pow_in_S n p r
+      exact pinS n p r
 
-  exact idkhowtonamethis n p r hn_gt_one a b ainS aequivb
+  exact idkhowtonamethis n p r hn_gt_one childs_binomial_theorem a b ainS aequivb
