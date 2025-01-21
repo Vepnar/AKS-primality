@@ -39,6 +39,12 @@ lemma pge3 : p ≥ 3 := by
   apply Nat.succ_le_of_lt
   trivial
 
+include hnodd in
+lemma n_ne_zero : n ≠ 0 := by
+  intro nzero
+  rw [nzero] at hnodd
+  exact Nat.not_odd_zero hnodd
+
 -- Definitions and basic lemmas that are necessary in many places
 
 noncomputable def d := orderOf (n : ZMod r)
@@ -112,6 +118,42 @@ noncomputable def H : Submonoid (AdjoinRoot (f p r))
 
 noncomputable def Gmonoid : Submonoid (𝔽 p r) := Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (H n p r)-- what is this homomorphism from and to?
 --Remark - this is a type submonoid, but we want a type set tp find a subgroup
+
+include hnodd in
+lemma gmonoid_not_contain_zero : 0 ∉ Gmonoid n p r hrnz
+  := by
+  have gdef : Gmonoid n p r hrnz = Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (Submonoid.closure
+      {h | ∃ (k : ℕ), k ≤ A n r ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}) := rfl
+  suffices : ∀ g ∈ Gmonoid n p r hrnz, g ≠ 0
+  . intro zeroinG
+    exact this 0 zeroinG rfl
+  rw [MonoidHom.map_mclosure] at gdef
+  simp only [map_natCast] at gdef
+  rw[gdef]
+  apply Submonoid.closure_induction
+  . intro x hx hxzero
+    simp at hx
+    obtain ⟨y, ⟨a, ha, hb⟩, hy⟩ := hx
+    rw [← hy, hb] at hxzero
+    simp [α, AdjoinRoot.algHomOfDvd_apply_root] at hxzero
+    have idk := calc
+      0 = (AdjoinRoot.root (h p r) + ↑ a)^n := by rw[hxzero, zero_pow (n_ne_zero n hnodd)]
+      _ = AdjoinRoot.root (h p r)^n + ↑ a := sorry
+
+    have := eq_neg_of_add_eq_zero_right hxzero
+    rw [this] at idk
+    have := eq_of_add_neg_eq_zero idk.symm
+    -- now we need that the order of x in F is r
+
+
+    sorry
+  . exact one_ne_zero
+  . rw[← gdef]
+    intro x y _ _ hx hy
+    rw[mul_ne_zero_iff]
+    tauto
+
+
 
 -- our Gmonoid has type submonoid,but it is easier to proof that it is a subgroup if we set it to a type set, but we will work around it for now
 def G : Subgroup (𝔽 p r)ˣ where
