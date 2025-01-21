@@ -32,10 +32,41 @@ theorem AKS (n r : ℕ)  (hn: n ≥ 2) (hr: r < n) (ho : orderOf (15 : ZMod 6) >
 
     . intro nprime
       constructor
-      . sorry
+      . by_contra npp
+        unfold is_perfect_power at npp
+        cases' npp with k npp
+        cases' npp with j npp
+        cases' npp with k1 k2
+        cases' k2 with j1 npp
+        have mdivn : ∃ m >1, m ∣ n := by
+          use k
+          refine ⟨?_, ?_⟩
+          exact k1
+
+          rw[← npp]
+          rw[dvd_iff_exists_eq_mul_left]
+          use k ^ (j-1)
+          rw[Nat.pow_pred_mul] -- wtf how to prove that??
+          sorry
+        sorry -- here is a contradiction as prime is only div by itself
       constructor
-      . sorry
-      . sorry
+      . unfold no_prime_divisors_below
+        simp
+        intro p hp hhp
+        rw[Nat.dvd_prime_two_le] at hhp
+        -- rw[eq_comm] at hhp
+        rw[hhp]
+        exact hr
+
+        exact nprime
+        exact Nat.Prime.two_le hp
+
+      . unfold last_prop
+        simp
+        intro e
+        refine ⟨?_, ?_⟩
+        sorry
+        sorry
 
 -- this is in mathlib: Nat.Prime.dvd_choose_pow_iff
 theorem n_choose_k (p : ℕ) (k : ℕ) (hk1 : k < p) (hk2 : k > 0) (hp : Nat.Prime p)
