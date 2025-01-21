@@ -146,9 +146,6 @@ def S : Set ℕ := {
 
 -- HOW TO SHOW G IS A GROUP lemma Ggroup (G p r h (h_div p r hrnz) A) : IsSubgroup G := by sorry
 
-noncomputable def φ : Polynomial (ZMod p) →+* AdjoinRoot (f p r) :=
-  AdjoinRoot.mk (f p r)
-
 lemma pinS : p ∈ S n p r := by
   intro g hg
   have ⟨q, hq⟩ := AdjoinRoot.mk_surjective g
@@ -189,7 +186,7 @@ lemma ninS : n ∈ S n p r := by
 lemma poly_div_lemma {R : Type*} [CommRing R] (a b c : ℕ)
   (modeq : a ≡ b [MOD c]) : (X : R[X])^c - 1 ∣ X^b - X^a := by
   wlog hba : a ≤ b
-  . have fact : b ≤ a := by refine Nat.le_of_not_ge hba
+  . have fact : b ≤ a := Nat.le_of_not_ge hba
     have := this (R := R) b a c modeq.symm fact
     exact dvd_sub_comm.mp this
   have : (X : R[X])^b - X^a = (X^(b-a) - 1) * X^a := by
@@ -264,11 +261,12 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
   have (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^b = g^a := by
     wlog hab : a ≤ b
     . sorry
-    let c : ℕ := sorry
+    obtain ⟨c, hc⟩ := (Nat.modEq_iff_dvd' hab).mp eqmod
+    have habcancel : b - a + a = b := Nat.sub_add_cancel hab
     have := calc
-      g^b = g^(b - a + a) := sorry
+      g^b = g^(b - a + a) := by rw[habcancel]
       _   = g^(b-a) * g^a := by ring
-      _   = g^((n^d n r-1)*c) * g^a := sorry
+      _   = g^((n^d n r-1)*c) * g^a := by rw[hc]
       _   = (g^(n^d n r-1))^c * g^a := by ring
     sorry
     -- hmm, what if a = 0? Then we'd need to prove that H ⊆ (Zp[X]/f)\*. Given that H maps to G ⊆ F\*, this is true.
@@ -472,8 +470,13 @@ lemma distinct : Function.Injective (m n p)
 
   let k := multiplicity p n
   have : p^k ∣ n := pow_multiplicity_dvd p n
-  have : p^k ≠ n := False.elim $ hnnotperfpow $ by
-    sorry
+  have : p^k ≠ n := λ f ↦ hnnotperfpow $ by
+    use p, k
+    constructor
+    . exact Nat.Prime.one_lt (inferInstanceAs (Fact p.Prime)).out
+    constructor
+    . sorry
+    . exact f
 
   sorry
 
