@@ -2,7 +2,27 @@ import Mathlib
 import LeanTutorial.basic
 open Polynomial
 
-variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n)  [Fact (n ≥ 1)] -- use a weaker assumption, have a bit more general lemma
+variable (n p r : ℕ) (hrnz : r ≠ 0) [hp': Fact (Nat.Prime p)] (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n)  [hge1: Fact (n ≥ 1)] -- use a weaker assumption, have a bit more general lemma
+
+lemma logb_base2_ge_one {n : ℕ} (hn : n ≥ 2) : 1 ≤ Real.logb 2 n := by
+    cases n
+    exfalso
+    exact Nat.not_succ_le_zero 1 hn
+    case succ n =>
+    rw[Real.le_logb_iff_rpow_le]
+    simp
+    rw[ge_iff_le] at hn
+    rify at hn
+    exact hn
+    exact one_lt_two
+    have : 0 < n + 1 := by
+      exact Nat.zero_lt_succ n
+    rify at this
+    simp
+    exact this
+
+lemma nge2 (hn: p ∣ n) : n ≥ 2 := by
+
 
 lemma lemma43 (g q : Polynomial (ZMod p))
   (hg : AdjoinRoot.mk (h p r) g ∈ Gmonoid n p r hrnz) (hq : AdjoinRoot.mk (h p r) q ∈ Gmonoid n p r hrnz)
