@@ -21,7 +21,14 @@ lemma logb_base2_ge_one {n : ℕ} (hn : n ≥ 2) : 1 ≤ Real.logb 2 n := by
     simp
     exact this
 
-lemma nge2 (hn: p ∣ n) : n ≥ 2 := by
+lemma nge2 (hn' : p ∣ n) : n ≥ 2 := by
+    have pprime := hp'.out
+    have nge0 := hge1.out
+    have zero_lt_n : 0 < n := lt_of_lt_of_le (zero_lt_one) nge0
+    have p_le_n : p ≤ n := Nat.le_of_dvd zero_lt_n hn'
+    have pge2 : 2 ≤ p := Nat.Prime.two_le pprime
+    apply lt_of_lt_of_le pge2 p_le_n
+
 
 
 lemma lemma43 (g q : Polynomial (ZMod p))
@@ -60,7 +67,7 @@ lemma lemma43 (g q : Polynomial (ZMod p))
     -- linarith
     simp
     exact Nat.zero_lt_of_ne_zero (by trivial)
-    sorry
+    apply logb_base2_ge_one (nge2 n p hp)
   have eqq := by exact (hX polinH)
   have eqq': (AdjoinRoot.mk (f p r)) 1  = (AdjoinRoot.mk (f p r)) 0 := by
     simp
