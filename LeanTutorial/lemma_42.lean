@@ -59,18 +59,18 @@ lemma lemma42 (a b : ℕ)
 
     simp only [this]
 
-  have : ∀ g ∈ H n p r, (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^a = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^b
+  have : ∀ g ∈ H n p r, (φ p r hrnz g)^a = (φ p r hrnz g)^b
     := λ g hg ↦ calc
-    _ = AdjoinRoot.algHomOfDvd (h_div p r hrnz) (g^a) := by simp only [map_pow]
-    _ = AdjoinRoot.algHomOfDvd (h_div p r hrnz) (g^b) := by rw[part2]; assumption
-    _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g)^b := by simp only [map_pow]
+    _ = φ p r hrnz (g^a) := by simp only [map_pow]
+    _ = φ p r hrnz (g^b) := by rw[part2]; assumption
+    _ = (φ p r hrnz g)^b := by simp only [map_pow]
 
   -- part 3: applying this to elements of G
   have : ∀ g ∈ G n p r hrnz, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
     have := this q hq
     have := (calc
-    (rfl.mp (↑ g : 𝔽 p r))^a = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q)^a := by rw[← hqg]; rfl
-    _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q)^b := this
+    (rfl.mp (↑ g : 𝔽 p r))^a = (φ p r hrnz q)^a := by rw[← hqg]; rfl
+    _ = (φ p r hrnz q)^b := this
     _ = (rfl.mp (↑ g : 𝔽 p r))^b := by rw[← hqg]; rfl)
 
     exact Units.eq_iff.mp this

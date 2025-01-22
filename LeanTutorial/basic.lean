@@ -39,11 +39,33 @@ lemma pge3 : p ≥ 3 := by
   apply Nat.succ_le_of_lt
   trivial
 
-include hnodd in
-lemma n_ne_zero : n ≠ 0 := by
-  intro nzero
-  rw [nzero] at hnodd
-  exact Nat.not_odd_zero hnodd
+include hn_gt_one in
+lemma n_ne_zero : n ≠ 0 :=
+  Ne.symm $ ne_of_lt $ calc
+    0 < 2 := by norm_num
+    _ ≤ n := hn_gt_one
+
+include hn_gt_one in
+lemma n_ge_one : n ≥ 1 := by
+  exact le_of_lt hn_gt_one
+
+include hn_gt_one in
+lemma n_ge_two : n ≥ 2 := hn_gt_one
+
+include hrnz hordern in
+lemma r_ge_two : r ≥ 2 := by
+  have rne0 : r ≠ 0 := hrnz
+  have rne1 : r ≠ 1 := by
+    sorry -- annoying
+  by_contra hx
+  have := lt_of_not_ge hx
+  cases r with
+  | zero => exact rne0 rfl
+  | succ r' => cases r' with
+    | zero => exact rne1 rfl
+    | succ r'' =>
+      rw[add_assoc] at this;
+      simp only [Nat.reduceAdd, add_lt_iff_neg_right, not_lt_zero'] at this;
 
 -- Definitions and basic lemmas that are necessary in many places
 
@@ -91,6 +113,9 @@ lemma h_div : h p r ∣ f p r := by
 
 def 𝔽 := AdjoinRoot (h p r)
 
+noncomputable def β : 𝔽 p r
+  := AdjoinRoot.root (h p r)
+
 noncomputable instance : Field (𝔽 p r) := by
   unfold 𝔽
   infer_instance
@@ -107,16 +132,16 @@ noncomputable instance : Finite (𝔽 p r) := by
   infer_instance
 
 include hrnz in
-lemma order_of_X_in_F : orderOf (AdjoinRoot.root (h p r)) = r := by
+lemma order_of_X_in_F : orderOf (β p r) = r := by
   have : r > 0 := Nat.zero_lt_of_ne_zero hrnz
   apply (orderOf_eq_iff this).mpr
   constructor
-  . have : AdjoinRoot.root (h p r) ^ r - 1 = 0 := by calc
+  . have : β p r ^ r - 1 = 0 := by calc
           _ = IsAdjoinRoot.map (AdjoinRoot.isAdjoinRoot _) _ := rfl
           _ = AdjoinRoot.mk (h p r) (X^r-1) := by simp only [this, AdjoinRoot.isAdjoinRoot_map_eq_mk]
           _ = AdjoinRoot.mk (h p r) (f p r) := by congr
-          _         = 0 := AdjoinRoot.mk_eq_zero.mpr (h_div p r hrnz)
-    have : AdjoinRoot.root (h p r) ^ r - 1 + 1 = 0 + 1 := congrArg (. + 1) this
+          _ = 0 := AdjoinRoot.mk_eq_zero.mpr (h_div p r hrnz)
+    have : β p r ^ r - 1 + 1 = 0 + 1 := congrArg (. + 1) this
     simp only [sub_add_cancel, zero_add] at this
     assumption
   . intro m hmltr hmpos eq
@@ -130,17 +155,61 @@ lemma order_of_X_in_F : orderOf (AdjoinRoot.root (h p r)) = r := by
     -- at the roots of f (p does not divide r!). Writing X^r-1 = ∏ (d ∣ r) Φd, we see that a root of one cyclotomic
     -- polynomial cannot be a root of any other.
 
+noncomputable def φ : AdjoinRoot (f p r) →ₐ[ZMod p] AdjoinRoot (h p r)
+  := AdjoinRoot.algHomOfDvd (h_div p r hrnz)
+
 noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure
       {h | ∃ (k : ℕ), k ≤ A n r ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}
 
-noncomputable def Gmonoid : Submonoid (𝔽 p r) := Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (H n p r)-- what is this homomorphism from and to?
+noncomputable def Gmonoid : Submonoid (𝔽 p r) := Submonoid.map (φ p r hrnz) (H n p r)-- what is this homomorphism from and to?
 --Remark - this is a type submonoid, but we want a type set tp find a subgroup
 
-include hnodd in
+include childs_binomial_theorem hrnz hordern hn_gt_one in
+lemma nz_of_β_add_x : ∀ a ∈ Finset.range (A n r + 1), β p r + ↑ a ≠ 0
+  := by
+  intro a ha hzero
+  have hβ := add_eq_zero_iff_eq_neg.mp hzero
+  have := add_eq_zero_iff_eq_neg.mp $ Eq.symm $ calc
+    0 = (β p r + ↑ a)^n := by rw[hzero,zero_pow (n_ne_zero n hn_gt_one)]
+    _ = φ p r hrnz ((α p r + ↑ a)^n) := by simp[α, φ, β, AdjoinRoot.algHomOfDvd_apply_root (h_div p r hrnz)]
+    _ = φ p r hrnz (α p r^n + ↑ a) := by rw [childs_binomial_theorem a ha]
+    _ = β p r^n + (↑ a : 𝔽 p r) := by simp[α, φ, β, AdjoinRoot.algHomOfDvd_apply_root (h_div p r hrnz)]
+  rw[← hβ] at this
+
+  have βnonzero : β p r ≠ 0 := by
+    intro βzero
+    have := pow_orderOf_eq_one (β p r)
+    rw [order_of_X_in_F p r hrnz, βzero, zero_pow hrnz] at this
+    apply zero_ne_one this
+
+  rw [← Nat.sub_add_cancel (n_ge_one n hn_gt_one), pow_add, pow_one] at this
+  have := mul_left_eq_self₀.mp this
+  simp[βnonzero] at this
+
+  have rdivn1 := orderOf_dvd_iff_pow_eq_one.mpr this
+  rw [order_of_X_in_F p r hrnz] at rdivn1
+
+  have : (n : ZMod r) = 1 := by
+    haveI : NeZero r := NeZero.mk hrnz
+    refine (ZMod.natCast_eq_iff r n 1).mpr ?_
+    obtain ⟨k, hk⟩ := rdivn1
+    use k
+    rw[← hk,add_comm, ZMod.val_one'' (ne_of_lt (r_ge_two n r hrnz hordern)).symm, Nat.sub_add_cancel (n_ge_one n hn_gt_one)]
+
+  have : orderOf (n : ZMod r) = 1 := by exact orderOf_eq_one_iff.mpr this
+  simp only [this, gt_iff_lt, Nat.lt_one_iff, Nat.floor_eq_zero, sq_lt_one_iff_abs_lt_one] at hordern
+  have : Real.logb 2 n < 1 := lt_of_le_of_lt (le_abs_self (Real.logb 2 ↑n)) hordern
+
+  rw [Real.logb_lt_iff_lt_rpow (by norm_num) (Nat.cast_pos'.mpr (n_ge_one n hn_gt_one))] at this
+  simp only [Real.rpow_one, Nat.cast_lt_ofNat] at this
+  exact not_le_of_lt this hn_gt_one
+
+include childs_binomial_theorem hn_gt_one hordern in
+-- is this even necessary anymore?
 lemma gmonoid_not_contain_zero : 0 ∉ Gmonoid n p r hrnz
   := by
-  have gdef : Gmonoid n p r hrnz = Submonoid.map (AdjoinRoot.algHomOfDvd (h_div p r hrnz)) (Submonoid.closure
+  have gdef : Gmonoid n p r hrnz = Submonoid.map (φ p r hrnz) (Submonoid.closure
       {h | ∃ (k : ℕ), k ≤ A n r ∧ h = α _ _ + AdjoinRoot.of (f _ _) (↑ k)}) := rfl
   suffices : ∀ g ∈ Gmonoid n p r hrnz, g ≠ 0
   . intro zeroinG
@@ -150,21 +219,14 @@ lemma gmonoid_not_contain_zero : 0 ∉ Gmonoid n p r hrnz
   rw[gdef]
   apply Submonoid.closure_induction
   . intro x hx hxzero
-    simp at hx
+    simp only [Set.mem_image, Set.mem_setOf_eq] at hx
     obtain ⟨y, ⟨a, ha, hb⟩, hy⟩ := hx
     rw [← hy, hb] at hxzero
-    simp [α, AdjoinRoot.algHomOfDvd_apply_root] at hxzero
-    have idk := calc
-      0 = (AdjoinRoot.root (h p r) + ↑ a)^n := by rw[hxzero, zero_pow (n_ne_zero n hnodd)]
-      _ = AdjoinRoot.root (h p r)^n + ↑ a := sorry
-
-    have := eq_neg_of_add_eq_zero_right hxzero
-    rw [this] at idk
-    have := eq_of_add_neg_eq_zero idk.symm
-    -- now we need that the order of x in F is r
-
-
-    sorry
+    have : a ∈ Finset.range (A n r + 1) := by
+      simp
+      exact add_le_add ha (le_refl 1)
+    simp [α, β, φ, AdjoinRoot.algHomOfDvd_apply_root, h_div p r hrnz] at hxzero
+    exact nz_of_β_add_x n p r hrnz hn_gt_one childs_binomial_theorem hordern a this hxzero
   . exact one_ne_zero
   . rw[← gdef]
     intro x y _ _ hx hy

@@ -110,7 +110,7 @@ lemma lemma43 (g q : Polynomial (ZMod p))
   rw[← add_neg_eq_iff_eq_add] at uu
   simp
 
-  have orderX : orderOf (AdjoinRoot.root (h p r)) = r := by sorry
+  have orderX : orderOf (β p r) = r := order_of_X_in_F p r hrnz
   -- see cyclotomic.lean eventually
 
   sorry
