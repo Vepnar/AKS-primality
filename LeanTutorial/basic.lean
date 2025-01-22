@@ -47,6 +47,21 @@ lemma n_ne_zero : n ≠ 0 := by
 
 -- Definitions and basic lemmas that are necessary in many places
 
+include hrnz in
+lemma f_non_const : (f p r).degree ≠ 0 := by
+  have := Polynomial.degree_X_pow_sub_C (Nat.zero_lt_of_ne_zero hrnz) (1 : ZMod p)
+  rw [map_one] at this
+  unfold f
+  rw [this]
+  exact Nat.cast_ne_zero.mpr hrnz
+
+instance instNontrivialAdjoinRootF : Nontrivial (AdjoinRoot (f p r))
+  := AdjoinRoot.nontrivial (f p r) (f_non_const p r hrnz)
+
+instance instCharPAdjoinRootF: CharP (AdjoinRoot (f p r)) p := by
+  haveI := instNontrivialAdjoinRootF p r hrnz
+  exact charP_of_injective_algebraMap' (ZMod p) (AdjoinRoot (f p r)) p
+
 noncomputable def d := orderOf (n : ZMod r)
 
 include hordern hn_gt_one in

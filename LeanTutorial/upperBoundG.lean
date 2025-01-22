@@ -93,3 +93,7 @@ noncomputable def T : Finset (ℕ × ℕ)
 --   (t := Set.toFinset (R p r n).carrier)
 --   (cardT _ _ _)
 --   (f := ℓ p n)
+
+
+lemma upper_bound_G : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
+  := sorry

@@ -1,18 +1,31 @@
 import Mathlib
 import LeanTutorial.basic
+import LeanTutorial.lowerBoundG
+import LeanTutorial.upperBoundG
 
--- Continue later
-def last_prop (n r : ℕ) : Prop := ∀ a : ℕ,  1 ≤ a ∧ a ≤ (Nat.sqrt r)*(Nat.log2 n) ∧ True
-
-
-theorem AKS (n r : ℕ)  (hn: n ≥ 2) (hr: r < n) (ho : orderOf (15 : ZMod 6) > (Nat.log2 5)^2):
-    (¬is_perfect_power n ∧ no_prime_divisors_below n r ∧ last_prop n r )↔ Nat.Prime n := by
-    let p : ℕ := sorry
-    have hrnz : r ≠ 0 := sorry
-    have hp : p ∣ n := sorry
-    haveI : Fact (p.Prime) := sorry
+theorem AKS (n r : ℕ) (hn: n ≥ 2) (rpos : 0 < r) (hr: r < n) (hnorder : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2 ⌋₊):
+    (¬is_perfect_power n ∧ no_prime_divisors_below n r
+    ∧ (∀ a ∈ Finset.range (A n r + 1), (α n r + ↑ a)^n = α n r^n + ↑ a)) ↔ Nat.Prime n := by
+    have hrnz : r ≠ 0 := (ne_of_lt rpos).symm
     constructor
     . intro ⟨ hnnotperfpow, hnnoprdivs, last_prop⟩
+      by_contra nnotprime
+      let factors := Nat.primeFactors n
+      have := Nat.nonempty_primeFactors.mpr hn
+      let p : ℕ := Nat.minFac n
+      have hp : p ∣ n := Nat.minFac_dvd n
+      haveI : Fact (p.Prime) := Fact.mk (Nat.minFac_prime (ne_of_lt hn).symm)
+
+      have lowerboundG : Nat.card (G n p r hrnz) > (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
+        := lower_bound_G n p r hrnz hp hnnoprdivs
+
+      have upperboundG : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
+        := upper_bound_G n p r hrnz hp hnnoprdivs
+
+      have : (Nat.card (G n p r hrnz) : ℝ) < Nat.card (G n p r hrnz) := lt_of_le_of_lt upperboundG lowerboundG
+
+      exact lt_irrefl (Nat.card (G n p r hrnz) : ℝ) this
+
       -- UPPER BOUND
       -- have : ∃ i j I J : ℕ, (n^i * p^j) ≡ (n^I * p^J) [MOD r] := by sorry
       -- have : i ∈ S n p r := by sorry -- lemma 4.1
@@ -21,127 +34,39 @@ theorem AKS (n r : ℕ)  (hn: n ≥ 2) (hr: r < n) (ho : orderOf (15 : ZMod 6) >
       -- have : J ∈ S n p r := by sorry -- lemma 4.1
       -- have : Nat.card G | nⁱ * pʲ - nᴵ * pᴶ := by sorry -- lemma 4.2
       -- have : Nat.card G ≤ |nⁱ * pʲ - nᴵ * pᴶ| ≤ (n*p)^(√ Nat.card R) - 1 < n^(2√ Nat.card R)-1 := by sorry -- results above?
-      have Gup : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(√ (Nat.card (R n p r hrnz hp hnnoprdivs)))-1 := by sorry -- result above with replacing n with n/p as n/p is in S so also that proof
+      -- have Gup : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(√ (Nat.card (R n p r hrnz hp hnnoprdivs)))-1 := by sorry -- result above with replacing n with n/p as n/p is in S so also that proof
 
-      -- LOWER BOUND
-      have Rd : d ≤ Nat.card (R n p r hrnz hp hnnoprdivs) := by sorry -- d > (log n )^2, the order of n mod r by assumption? (thats what is in the text)
-      have RB : ⌊√ ↑ (Nat.card (R n p r hrnz hp hnnoprdivs)) * Real.logb 2 n⌋ < Nat.card (R n p r hrnz hp hnnoprdivs)  := by sorry -- i guess the result above?
-      have : (n : ℝ)^(√ ↑ (Nat.card (R n p r hrnz hp hnnoprdivs)))-1 < Nat.card (G n p r hrnz) := by sorry -- lemma 43
-
-      sorry
+      -- -- LOWER BOUND
+      -- have Rd : d ≤ Nat.card (R n p r hrnz hp hnnoprdivs) := by sorry -- d > (log n )^2, the order of n mod r by assumption? (thats what is in the text)
+      -- have RB : ⌊√ ↑ (Nat.card (R n p r hrnz hp hnnoprdivs)) * Real.logb 2 n⌋ < Nat.card (R n p r hrnz hp hnnoprdivs)  := by sorry -- i guess the result above?
+      -- have : (n : ℝ)^(√ ↑ (Nat.card (R n p r hrnz hp hnnoprdivs)))-1 < Nat.card (G n p r hrnz) := by sorry -- lemma 43
 
     . intro nprime
+      haveI : Fact (n.Prime) := Fact.mk nprime
       constructor
       . by_contra npp
-        unfold is_perfect_power at npp
-        cases' npp with k npp
-        cases' npp with j npp
-        cases' npp with k1 k2
-        cases' k2 with j1 npp
-        have mdivn : ∃ m >1, m ∣ n := by
-          use k
-          refine ⟨?_, ?_⟩
-          exact k1
-
-          rw[← npp]
-          rw[dvd_iff_exists_eq_mul_left]
+        obtain ⟨k, j, k1, j1, npp⟩ := npp
+        have k_lt_n := lt_self_pow₀ k1 j1
+        rw[npp] at k_lt_n
+        have : k ∣ n := by
+          rw[← npp, dvd_iff_exists_eq_mul_left]
           use k ^ (j-1)
-          rw[Nat.pow_pred_mul] -- wtf how to prove that??
-          sorry
-        sorry -- here is a contradiction as prime is only div by itself
+          rw[Nat.pow_pred_mul]
+          exact le_trans (by norm_num) j1
+        have := (Nat.dvd_prime_two_le nprime k1).mp this
+        exact ne_of_lt k_lt_n this
       constructor
       . unfold no_prime_divisors_below
         simp
         intro p hp hhp
-        rw[Nat.dvd_prime_two_le] at hhp
-        -- rw[eq_comm] at hhp
+        rw[Nat.dvd_prime_two_le nprime (Nat.Prime.two_le hp)] at hhp
         rw[hhp]
         exact hr
-
-        exact nprime
-        exact Nat.Prime.two_le hp
-
-      . unfold last_prop
-        simp
-        intro e
-        refine ⟨?_, ?_⟩
-        sorry
-        sorry
-
--- this is in mathlib: Nat.Prime.dvd_choose_pow_iff
-theorem n_choose_k (p : ℕ) (k : ℕ) (hk1 : k < p) (hk2 : k > 0) (hp : Nat.Prime p)
-  : p ∣ p.choose k
-  := by
-    have h := (Nat.Prime.dvd_choose_pow_iff (n := 1) (k := k) (p := p) hp).mpr
-    -- Nat.Prime.dvd_choose_self
-    rw [pow_one] at h
-    have h2 : k ≠ 0 ∧ k ≠ p := by
-      constructor
-      exact Nat.not_eq_zero_of_lt hk2
-      exact Nat.ne_of_lt hk1
-    exact h h2
-
-
-lemma todo (n : ℕ) (hn : ¬ Nat.Prime n) : ∃ (p : ℕ), Nat.Prime p ∧ multiplicity p n ≥ 1 := by
-  #check WfDvdMonoid.exists_irreducible_factor (α := ℕ) (a := n)
-  -- hn seems to be unnecessary
-  -- and of course n cannot be 0 or 1.
-  sorry
-
--- proof based on: https://www.cse.iitk.ac.in/users/manindra/algebra/primality_v6.pdf
-section
-  open Polynomial
-  -- Will fix this later
-
-
-
-  theorem primality (n : ℕ) (hn : n ≥ 2) (a : ZMod n) (coprime : Invertible a)
-    : Nat.Prime n ↔ (X + C a)^n = X^n + C a
-    := by
-      let R := Polynomial (ZMod n)
-      let g := (X + C a)^n - (X^n + C a)
-      have hg : g = ∑ i ∈ Finset.range (n-1), monomial (i+1) (↑ (n.choose (i+1))) := by
-        unfold g
-        rw [add_pow]
-        sorry
-      constructor
-      . -- if n is prime, prove the equality holds
-        intro nprime
-        have h : ∀ i ∈ Finset.range (n-1), (↑ (n.choose (i + 1))) = (0 : ZMod n) := by
-          intro i hi
-          have hh : i < n-1 := Finset.mem_range.mp hi
-          have : n ∣ n.choose (i+1) := n_choose_k n (i+1) (Nat.add_lt_of_lt_sub hh) (Nat.zero_lt_succ i) nprime
-          refine (ZMod.natCast_zmod_eq_zero_iff_dvd (n.choose (i + 1)) n).mpr this
-        have h2 : ∀ i ∈ Finset.range (n-1), (monomial (i+1) ↑(n.choose (i + 1))) = (0 : R) := by
-          intro i hi
-          apply (monomial_eq_zero_iff (↑(n.choose (i + 1)) : ZMod n) (i + 1)).mpr
-          exact h i hi
-        have h3 := Finset.sum_eq_zero h2
-        have h4 : g = 0 := by rw [h3] at hg; exact hg
-        exact sub_eq_zero.mp h4
-      . -- if n is not prime, prove the equality does not hold
-        contrapose
-        intro hnnotprime
-        obtain ⟨q, qprime, hq⟩ := todo n hnnotprime
-        let k := multiplicity q n
-        have h2 : q^k ∣ n := pow_multiplicity_dvd q n
-        have h3 : ¬(q^(k+1) ∣ (n.choose q)) := by
-          apply FiniteMultiplicity.not_pow_dvd_of_multiplicity_lt
-          . apply Nat.finiteMultiplicity_iff.mpr
-            constructor
-            exact Nat.Prime.ne_one qprime
-            refine Nat.choose_pos ?_
-            have hh : q ∣ n := by
-              have : q ∣ q^k := by refine dvd_pow_self q (Nat.not_eq_zero_of_lt hq)
-              exact Trans.trans this h2
-            have hh2 : n ≠ 0 := by exact Nat.not_eq_zero_of_lt hn
-            refine Nat.le_of_dvd ?_ hh
-            exact Nat.zero_lt_of_ne_zero hh2
-          . sorry
-        have h4 : g.coeff q ≠ 0 := sorry
-        intro equal
-        have h5 : g = 0 := sub_eq_zero_of_eq equal
-        have h6 : (0 : R).coeff q = 0 := rfl
-        have := congrArg (λ p ↦ p.coeff q) h5
-        simp [coeff_zero] at this
-        exact h4 this
+      . intro a _ -- assumption on a is unnecessary
+        haveI := instCharPAdjoinRootF n r hrnz
+        simp [add_pow_char (α n r) (↑ a) n]
+        calc
+            (a : AdjoinRoot (f n r))^n = (AdjoinRoot.of (f n r) (a : ZMod n))^n := by rw [map_natCast]
+            _ = AdjoinRoot.of (f n r) ((a : ZMod n)^n) := by rw[map_pow]
+            _ = AdjoinRoot.of (f n r) (a : ZMod n) := by simp only [ZMod.pow_card, map_natCast]
+            _ = AdjoinRoot.of (f n r) a := by rw [map_natCast]
