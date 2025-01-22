@@ -85,6 +85,17 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
     rw [this]
     simp only [AlgHom.coe_id, id_eq]
 
+  have cancelgs (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : ∀ (c : ℕ), g * (g^(n^d n r - 1))^c = g := by
+    intro c
+    induction c with
+    | zero => ring
+    | succ c' ih =>
+      rw[add_comm c', pow_add, pow_one, ← mul_assoc, mul_comm g]
+      nth_rw 2 [← pow_one g]
+      rw[← pow_add, Nat.sub_add_cancel (one_le_pow₀ (le_of_lt hn_gt_one)),
+        g_pow_n_d_eq_g g hg]
+      exact ih
+
   have (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^b = g^a := by
     rcases le_total a b with hab | hba
     . obtain ⟨c, hc⟩ := (Nat.modEq_iff_dvd' hab).mp eqmod
@@ -97,24 +108,22 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
         _   = g^a * (g^(n^d n r-1))^c := by ring
         _   = g^(a-1+1) * (g^(n^d n r-1))^c := by rw[ha1cancel]
         _   = g^(a-1) * (g * (g^(n^d n r-1))^c) := by ring
-      rw[this]
-
-      have : ∀ (c : ℕ), g * (g^(n^d n r - 1))^c = g := by
-        intro c
-        induction c with
-        | zero => ring
-        | succ c' ih =>
-          rw[add_comm c', pow_add, pow_one, ← mul_assoc, mul_comm g]
-          nth_rw 2 [← pow_one g]
-          rw[← pow_add, Nat.sub_add_cancel (one_le_pow₀ (le_of_lt hn_gt_one)),
-            g_pow_n_d_eq_g g hg]
-          exact ih
-
-      rw[this]
+      rw[this, cancelgs g hg]
       nth_rw 2 [← pow_one g]
       rw[← pow_add, ha1cancel]
-    . -- exactly the same, should extract that to a lemma
-      sorry
+    . obtain ⟨c, hc⟩ := (Nat.modEq_iff_dvd' hba).mp eqmod.symm
+      have habcancel : a - b + b = a := Nat.sub_add_cancel hba
+      have ha1cancel : b - 1 + 1 = b := Nat.sub_add_cancel (Nat.zero_lt_of_ne_zero hbnz)
+      have := calc
+        g^a = g^(a - b + b) := by rw[habcancel]
+        _   = g^b * g^(a-b) := by ring
+        _   = g^b * g^((n^d n r-1)*c) := by rw[hc]
+        _   = g^b * (g^(n^d n r-1))^c := by ring
+        _   = g^(b-1+1) * (g^(n^d n r-1))^c := by rw[ha1cancel]
+        _   = g^(b-1) * (g * (g^(n^d n r-1))^c) := by ring
+      rw[this, cancelgs g hg]
+      nth_rw 3 [← pow_one g]
+      rw[← pow_add, ha1cancel]
 
   intro g hg
   calc
