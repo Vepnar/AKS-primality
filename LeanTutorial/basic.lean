@@ -111,6 +111,9 @@ lemma order_of_X_in_F : orderOf (AdjoinRoot.root (h p r)) = r := by
     -- contradiction with [this, hmltr]. Don't know how to show this.
     -- I would like to prove this with help of Alain
     sorry
+    -- proof suggested by alain: f = X^r - 1 is separable because its derivative is rX^(r-1) which is nonzero
+    -- at the roots of f (p does not divide r!). Writing X^r-1 = ∏ (d ∣ r) Φd, we see that a root of one cyclotomic
+    -- polynomial cannot be a root of any other.
 
 noncomputable def H : Submonoid (AdjoinRoot (f p r))
   := Submonoid.closure
