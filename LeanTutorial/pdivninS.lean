@@ -27,6 +27,7 @@ lemma poly_div_lemma {R : Type*} [CommRing R] (a b c : ℕ)
 
 include hn_gt_one childs_binomial_theorem in
 lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^d n r-1])
+  (hanz : a ≠ 0) (hbnz : b ≠ 0)
   : b ∈ S n p r := by
   have hrdiv : r ∣ n^d n r - 1 := by
     suffices (n : ZMod r)^d n r - 1 = 0 by
@@ -75,7 +76,7 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
       rw [pow_one] at this
       exact this
 
-  have (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^n^d n r = g := by
+  have g_pow_n_d_eq_g (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^n^d n r = g := by
     rw [step₂ _ hg]
     simp_rw[this]
     unfold α
@@ -85,18 +86,35 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
     simp only [AlgHom.coe_id, id_eq]
 
   have (g : AdjoinRoot (f p r)) (hg : g ∈ H n p r) : g^b = g^a := by
-    wlog hab : a ≤ b
-    . sorry
-    obtain ⟨c, hc⟩ := (Nat.modEq_iff_dvd' hab).mp eqmod
-    have habcancel : b - a + a = b := Nat.sub_add_cancel hab
-    have := calc
-      g^b = g^(b - a + a) := by rw[habcancel]
-      _   = g^(b-a) * g^a := by ring
-      _   = g^((n^d n r-1)*c) * g^a := by rw[hc]
-      _   = (g^(n^d n r-1))^c * g^a := by ring
-    sorry
-    -- hmm, what if a = 0? Then we'd need to prove that H ⊆ (Zp[X]/f)\*. Given that H maps to G ⊆ F\*, this is true.
-    -- we need that fact anyway.
+    rcases le_total a b with hab | hba
+    . obtain ⟨c, hc⟩ := (Nat.modEq_iff_dvd' hab).mp eqmod
+      have habcancel : b - a + a = b := Nat.sub_add_cancel hab
+      have ha1cancel : a - 1 + 1 = a := Nat.sub_add_cancel (Nat.zero_lt_of_ne_zero hanz)
+      have := calc
+        g^b = g^(b - a + a) := by rw[habcancel]
+        _   = g^a * g^(b-a) := by ring
+        _   = g^a * g^((n^d n r-1)*c) := by rw[hc]
+        _   = g^a * (g^(n^d n r-1))^c := by ring
+        _   = g^(a-1+1) * (g^(n^d n r-1))^c := by rw[ha1cancel]
+        _   = g^(a-1) * (g * (g^(n^d n r-1))^c) := by ring
+      rw[this]
+
+      have : ∀ (c : ℕ), g * (g^(n^d n r - 1))^c = g := by
+        intro c
+        induction c with
+        | zero => ring
+        | succ c' ih =>
+          rw[add_comm c', pow_add, pow_one, ← mul_assoc, mul_comm g]
+          nth_rw 2 [← pow_one g]
+          rw[← pow_add, Nat.sub_add_cancel (one_le_pow₀ (le_of_lt hn_gt_one)),
+            g_pow_n_d_eq_g g hg]
+          exact ih
+
+      rw[this]
+      nth_rw 2 [← pow_one g]
+      rw[← pow_add, ha1cancel]
+    . -- exactly the same, should extract that to a lemma
+      sorry
 
   intro g hg
   calc
@@ -145,6 +163,16 @@ lemma ndivpinS : n/p ∈ S n p r := by
   let b := n/p
   have hb : b * p = n := Nat.div_mul_cancel hp
 
+  have hanz : a ≠ 0 := Nat.mul_ne_zero
+    (ne_of_gt (by linarith))
+    (ne_of_gt (one_le_pow₀ (Nat.Prime.one_le (inferInstanceAs (Fact p.Prime)).out)))
+
+  have hbnz : b ≠ 0 := by
+    intro bzero
+    rw [bzero, zero_mul] at hb
+    rw [← hb] at hn_gt_one
+    contradiction
+
   have hnpowd : 0 < k := by
     exact Nat.zero_lt_sub_of_lt (n_td_d_gt_one n r hn_gt_one hordern)
 
@@ -192,4 +220,4 @@ lemma ndivpinS : n/p ∈ S n p r := by
     . apply pow_in_S n p r
       exact pinS n p r
 
-  exact idkhowtonamethis n p r hn_gt_one childs_binomial_theorem a b ainS aequivb
+  exact idkhowtonamethis n p r hn_gt_one childs_binomial_theorem a b ainS aequivb hanz hbnz
