@@ -75,7 +75,7 @@ lemma lemma43 (g q : Polynomial (ZMod p))
 
   have p_ndiv_one : ¬ p ∣ 1 := Nat.Prime.not_dvd_one (inferInstanceAs (Fact (Nat.Prime p))).out
   have : NeZero (1 : AdjoinRoot (f p r)) := by
-    haveI : CharP (AdjoinRoot (f p r)) p := sorry -- TODO
+    haveI : CharP (AdjoinRoot (f p r)) p := instCharPAdjoinRootF _ _ hrnz
     have := NeZero.of_not_dvd (AdjoinRoot (f p r)) p_ndiv_one
     simp at *
     assumption
