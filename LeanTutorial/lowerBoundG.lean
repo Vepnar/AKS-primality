@@ -90,6 +90,30 @@ lemma prod_factors_in_H (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 
   have := AgtB n p r hrnz hp hnnoprdivs
   linarith
 
+lemma roots_prod_factors (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1)))
+  : ∀ a : ↥ (Finset.range (B n p r hrnz hp hnnoprdivs + 1)),
+      a ∈ T ↔ - ↑ a ∈ (prod_factors n p r hrnz hp hnnoprdivs T).roots
+  := by
+  intro a
+  have := λ (i : Finset.range (B n p r hrnz hp hnnoprdivs + 1)) (hI : i ∈ T.val)
+    ↦ Polynomial.roots_X_add_C (i : ZMod p)
+  simp only [map_one, one_mul, inv_one] at this
+  have := λ (i :ZMod p)
+    ↦ Polynomial.roots_C_mul_X_add_C i one_ne_zero
+  simp only [map_one, one_mul, inv_one] at this
+  rw[prod_factors, Polynomial.roots_prod]
+  simp_rw[Multiset.mem_bind]
+  constructor
+  . intro ha
+    use a
+    simp_rw [this]
+    simp_all only [Multiset.mem_singleton, Finset.mem_val, map_natCast, Subtype.forall, Finset.mem_range, roots_X_add_C, implies_true, and_self]
+
+  . intro ⟨b, hb₁, hb₂⟩
+    simp_rw [this, Multiset.mem_singleton, neg_inj] at hb₂
+    -- show that this is enough to conclude that a = b
+    sorry
+
 noncomputable def prod_factors₂ (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1))) : G n p r hrnz
   := by
   constructor
@@ -161,15 +185,22 @@ lemma prod_factors₃_injective : Function.Injective (prod_factors₃ n p r hrnz
         AdjoinRoot.aeval_eq]
     -- is there some way to extract out the repetition?
 
-  -- how do we show that this implies that S = T?
-  -- compare roots?
-  -- eg: a lemma that the set of roots of prod_factors S in Z/p is S?
-  sorry
+  apply Subtype.eq
+  apply Finset.ext
+  intro a
 
-  -- have := congrArg Polynomial.roots this
-  -- simp [prod_factors] at this
+  rw [roots_prod_factors, roots_prod_factors, this]
 
 
 
+include hn_gt_one childs_binomial_theorem hordern in
 lemma lower_bound_G : Nat.card (G n p r hrnz) > (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
-  := sorry
+  := by
+    have := calc
+      Nat.card (G n p r hrnz) ≥ Nat.card {x // (x : Finset (Finset.range (B _ _ _ _ _ _ + 1))) ≠ Finset.univ} :=
+        Nat.card_le_card_of_injective
+          (prod_factors₃ _ _ _ _ _ _ _ _ _)
+          (prod_factors₃_injective n p r hrnz hp hnnoprdivs hn_gt_one childs_binomial_theorem hordern)
+      _ = 2^(B n p r hrnz hp hnnoprdivs + 1) - 1 := by sorry
+    -- have := something like: if a < b as naturals, then a : ℝ < b : ℝ.
+    -- apply lt_of_lt_of_le _ this
