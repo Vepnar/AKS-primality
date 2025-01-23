@@ -114,12 +114,3 @@ lemma lemma43 (g q : Polynomial (ZMod p))
   -- see cyclotomic.lean eventually
 
   sorry
-
-  --refine ext ?_
-  --rintro j
-
-
-  --rw [hmod, AdjoinRoot.mk_sub],
-  --exact sub_self _, modular equality??
-
--- use order_of_X_in_F
