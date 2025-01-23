@@ -29,12 +29,10 @@ lemma nge2 (hn' : p ∣ n) : n ≥ 2 := by
     have pge2 : 2 ≤ p := Nat.Prime.two_le pprime
     apply lt_of_lt_of_le pge2 p_le_n
 
-
-
 lemma lemma43 (g q : Polynomial (ZMod p))
   (hg : AdjoinRoot.mk (h p r) g ∈ Gmonoid n p r hrnz) (hq : AdjoinRoot.mk (h p r) q ∈ Gmonoid n p r hrnz)
   (hmod : AdjoinRoot.mk (h p r) g = AdjoinRoot.mk (h p r) q)
-  (hdegg : Polynomial.degree g < Nat.card (R n p r hrnz hp hphnnoprdivs)) (hdegq : Polynomial.degree q < Nat.card (R n p r hrnz hp hnnoprdivs))
+  (hdegg : Polynomial.degree g < Nat.card (R n p r hrnz hp hnnoprdivs)) (hdegq : Polynomial.degree q < Nat.card (R n p r hrnz hp hnnoprdivs))
   : g = q := by
   let Δ := g - q
   have hΔmod : ∀ k ∈ S n p r, AdjoinRoot.mk (h p r) (Δ.comp X^k) = 0
