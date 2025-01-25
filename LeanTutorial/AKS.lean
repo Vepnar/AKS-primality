@@ -17,7 +17,9 @@ theorem AKS (n r : ℕ) (hn: n ≥ 2) (rpos : 0 < r) (hr: r < n) (hnorder : orde
       haveI : Fact (p.Prime) := Fact.mk (Nat.minFac_prime (ne_of_lt hn).symm)
 
       have lowerboundG : Nat.card (G n p r hrnz) > (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
-        := lower_bound_G n p r hrnz hp hnnoprdivs
+        := by
+        sorry
+        --lower_bound_G n p r hrnz hp hnnoprdivs
 
       have upperboundG : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
         := upper_bound_G n p r hrnz hp hnnoprdivs
