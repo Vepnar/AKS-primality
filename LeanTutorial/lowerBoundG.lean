@@ -113,7 +113,7 @@ lemma roots_prod_factors (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs +
     simp_rw [this, Multiset.mem_singleton, neg_inj] at hb₂
     -- show that this is enough to conclude that a = b
     sorry
-
+  sorry
 noncomputable def prod_factors₂ (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1))) : G n p r hrnz
   := by
   constructor
@@ -202,5 +202,6 @@ lemma lower_bound_G : Nat.card (G n p r hrnz) > (n : ℝ)^(Real.sqrt (Nat.card (
           (prod_factors₃ _ _ _ _ _ _ _ _ _)
           (prod_factors₃_injective n p r hrnz hp hnnoprdivs hn_gt_one childs_binomial_theorem hordern)
       _ = 2^(B n p r hrnz hp hnnoprdivs + 1) - 1 := by sorry
+    sorry
     -- have := something like: if a < b as naturals, then a : ℝ < b : ℝ.
     -- apply lt_of_lt_of_le _ this
