@@ -3,6 +3,8 @@ import LeanTutorial.basic
 open Polynomial
 
 variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
+
+-- todo: should rename this to mul_in_S
 lemma lemma41 (a b : ℕ)
   (sha : a ∈ S n p r)  -- make the variables explicit --> ()
   (shb : b ∈ S n p r)

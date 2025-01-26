@@ -3,7 +3,7 @@ import LeanTutorial.basic
 
 variable
   (n p : ℕ) [pprime : Fact (p.Prime)]
-  (hn_not_power_of_p : ∀ k, n ≠ p^k) (hn_gt_one : n > 1)
+  (hn_not_power_of_p : ∀ k, p^k ≠ n) (hn_gt_one : n > 1)
 
 def m (ij : ℕ × ℕ) : ℕ
   := n ^ ij.1 * p ^ ij.2
@@ -59,9 +59,6 @@ lemma distinct : Function.Injective (m n p)
     _     = p^(j₂ - j₁) := eq
     _     = p ^ j := rfl
 
-  let k := multiplicity p n
-  have n_not_power_of_p : p^k ≠ n := λ h ↦ hn_not_power_of_p k h.symm
-
   suffices : i = 0
   . simp only [this, true_and]
     simp only [this, pow_zero] at eq
@@ -81,6 +78,5 @@ lemma distinct : Function.Injective (m n p)
     _ = j := multiplicity_pow_self_of_prime (Nat.Prime.prime pprime.out) j)
 
   rw[← this, mul_comm, pow_mul, pow_left_inj₀ (Nat.zero_le _) (Nat.zero_le _) i_nzero] at eq
-  unfold k at n_not_power_of_p
   exfalso
-  exact n_not_power_of_p eq.symm
+  exact hn_not_power_of_p (multiplicity p n) eq.symm

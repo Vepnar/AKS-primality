@@ -7,11 +7,14 @@ variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)
 
 -- TODO: maybe switch a ≡ b [MOD k] to k ∣ a-b (that's what we use in practice anyway).
 lemma lemma42 (a b : ℕ)
-  (hineq : a ≥ b)
   (ha : a ∈ S n p r)
   (hb : b ∈ S n p r)
   (hab : a ≡ b [MOD r]) :
   a ≡ b [MOD Nat.card (G n p r hrnz)] := by
+
+  wlog hineq : a ≥ b
+  . have fact : b ≥ a := Nat.le_of_not_ge hineq
+    exact (this n p r hrnz b a hb ha hab.symm fact).symm
 
   -- part one: for all polys g ∈ ℤ/p[x][x], x^r-1 ∣ g(x^a) - g(x^b)
   have part1 : ∀ g : (ZMod p)[X][X], AdjoinRoot.mk (f p r) (g.eval (X^a)) = AdjoinRoot.mk (f p r) (g.eval (X^b)) := by

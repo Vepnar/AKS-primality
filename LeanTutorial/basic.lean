@@ -342,6 +342,7 @@ lemma p_coprime_r : p.Coprime r := Nat.Coprime.coprime_dvd_left hp (n_coprime_r 
 
 def n' := ZMod.unitOfCoprime n (n_coprime_r n r hrnz hnnoprdivs)
 def p' := ZMod.unitOfCoprime p (p_coprime_r n _ _ hrnz hp hnnoprdivs)
+def n_over_p' := n' n r hrnz hnnoprdivs / p' n p r hrnz hp hnnoprdivs
 
 def R : Subgroup ((ZMod r)ˣ)
   := Subgroup.closure {
@@ -349,7 +350,11 @@ def R : Subgroup ((ZMod r)ˣ)
       p' n p r hrnz hp hnnoprdivs
     }
 
--- instance : Set.Finite (R n p r hrnz hp hnnoprdivs).carrier := Set.Finite.subset _ _
+instance instRFinite : Finite (R n p r hrnz hp hnnoprdivs : Set (ZMod r)ˣ) :=
+  Finite.Set.subset Set.univ sorry
+
+instance instRFintype : Fintype ↑(R n p r hrnz hp hnnoprdivs : Set (ZMod r)ˣ)
+  := sorry
 
 -- def R' : Finset ((ZMod r)ˣ)
 --   := Set.toFinset (R n p r hrnz hp hnnoprdivs).carrier
