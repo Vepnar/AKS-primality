@@ -35,7 +35,7 @@ lemma distinct : Function.Injective (m n p)
   have jineq : j₂ ≥ j₁ := by
     by_contra ifnot
     replace ifnot : j₂ < j₁ := Nat.gt_of_not_le ifnot
-    have part1 : p^j₂ < p^j₁ := Nat.pow_lt_pow_of_lt (Nat.Prime.one_lt (inferInstanceAs (Fact p.Prime)).out) ifnot
+    have part1 : p^j₂ < p^j₁ := Nat.pow_lt_pow_of_lt (Nat.Prime.one_lt pprime.out) ifnot
     have part2 : n^(i₁ - i₂) ≥ 1 := one_le_pow₀ (Nat.zero_lt_of_ne_zero nnezero)
     have : 1 * p^j₂ < n^(i₁ - i₂) * p^j₁ := mul_lt_mul_of_pos_of_nonneg part2 part1 (by norm_num) (Nat.zero_le (p ^ j₁))
     rw [one_mul, ← eq] at this
@@ -64,7 +64,7 @@ lemma distinct : Function.Injective (m n p)
   have n_not_power_of_p : p^k ≠ n := λ f ↦ hnnotperfpow $ by
     use p, k
     constructor
-    . exact Nat.Prime.one_lt (inferInstanceAs (Fact p.Prime)).out
+    . exact Nat.Prime.one_lt pprime.out
     constructor
     . by_contra hk
       rw [ge_iff_le, not_le] at hk

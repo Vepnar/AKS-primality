@@ -2,7 +2,7 @@ import Mathlib
 import LeanTutorial.basic
 open Polynomial
 
-variable (n p r : ℕ) (hrnz : r ≠ 0) [hp': Fact (Nat.Prime p)] (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n)  [hge1: Fact (n ≥ 1)] -- use a weaker assumption, have a bit more general lemma
+variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)] (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n)  [hge1: Fact (n ≥ 1)] -- use a weaker assumption, have a bit more general lemma
 
 lemma logb_base2_ge_one {n : ℕ} (hn : n ≥ 2) : 1 ≤ Real.logb 2 n := by
     cases n
@@ -22,7 +22,7 @@ lemma logb_base2_ge_one {n : ℕ} (hn : n ≥ 2) : 1 ≤ Real.logb 2 n := by
     exact this
 
 lemma nge2 (hn' : p ∣ n) : n ≥ 2 := by
-    have pprime := hp'.out
+    have pprime := pprime.out
     have nge0 := hge1.out
     have zero_lt_n : 0 < n := lt_of_lt_of_le (zero_lt_one) nge0
     have p_le_n : p ≤ n := Nat.le_of_dvd zero_lt_n hn'
@@ -71,7 +71,7 @@ lemma lemma43 (g q : Polynomial (ZMod p))
     simp
     exact eqq
 
-  have p_ndiv_one : ¬ p ∣ 1 := Nat.Prime.not_dvd_one (inferInstanceAs (Fact (Nat.Prime p))).out
+  have p_ndiv_one : ¬ p ∣ 1 := Nat.Prime.not_dvd_one pprime.out
   have : NeZero (1 : AdjoinRoot (f p r)) := by
     haveI : CharP (AdjoinRoot (f p r)) p := instCharPAdjoinRootF _ _ hrnz
     have := NeZero.of_not_dvd (AdjoinRoot (f p r)) p_ndiv_one
@@ -109,6 +109,5 @@ lemma lemma43 (g q : Polynomial (ZMod p))
   simp
 
   have orderX : orderOf (β p r) = r := order_of_X_in_F p r hrnz
-  -- see cyclotomic.lean eventually
 
   sorry

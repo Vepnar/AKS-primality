@@ -3,7 +3,7 @@ import LeanTutorial.basic
 import LeanTutorial.lemma_41
 open Polynomial
 
-variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)]
+variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)]
   (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hn_gt_one : n > 1)
   (childs_binomial_theorem : ∀ a ∈ Finset.range (A n r + 1),
     (α p r + ↑ a)^n = α p r^n + ↑ a)
@@ -174,7 +174,7 @@ lemma ndivpinS : n/p ∈ S n p r := by
 
   have hanz : a ≠ 0 := Nat.mul_ne_zero
     (ne_of_gt (by linarith))
-    (ne_of_gt (one_le_pow₀ (Nat.Prime.one_le (inferInstanceAs (Fact p.Prime)).out)))
+    (ne_of_gt (one_le_pow₀ (Nat.Prime.one_le pprime.out)))
 
   have hbnz : b ≠ 0 := by
     intro bzero
