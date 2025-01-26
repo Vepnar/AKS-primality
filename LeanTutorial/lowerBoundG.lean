@@ -111,9 +111,11 @@ lemma roots_prod_factors (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs +
 
   . intro ⟨b, hb₁, hb₂⟩
     simp_rw [this, Multiset.mem_singleton, neg_inj] at hb₂
+
     -- show that this is enough to conclude that a = b
     sorry
   sorry
+
 noncomputable def prod_factors₂ (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1))) : G n p r hrnz
   := by
   constructor
@@ -196,12 +198,15 @@ lemma prod_factors₃_injective : Function.Injective (prod_factors₃ n p r hrnz
 include hn_gt_one childs_binomial_theorem hordern in
 lemma lower_bound_G : Nat.card (G n p r hrnz) > (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
   := by
-    have := calc
+    have ineq₁ := calc
       Nat.card (G n p r hrnz) ≥ Nat.card {x // (x : Finset (Finset.range (B _ _ _ _ _ _ + 1))) ≠ Finset.univ} :=
         Nat.card_le_card_of_injective
           (prod_factors₃ _ _ _ _ _ _ _ _ _)
           (prod_factors₃_injective n p r hrnz hp hnnoprdivs hn_gt_one childs_binomial_theorem hordern)
-      _ = 2^(B n p r hrnz hp hnnoprdivs + 1) - 1 := by sorry
+      _ = 2^(B n p r hrnz hp hnnoprdivs + 1) - 1 := by simp -- wow!
+    rify at ineq₁
+    suffices : (2 : ℝ)^(B n p r hrnz hp hnnoprdivs + 1) - 1 > (n : ℝ)^(Real.sqrt $ Nat.card (R n p r hrnz hp hnnoprdivs)) - 1
+    calc
+      (Nat.card (G n p r hrnz) : ℝ) ≥ (((2 : ℕ))^(B n p r hrnz hp hnnoprdivs + 1) - 1 : ℝ) := sorry -- ineq₁??
+      _ > (n : ℝ)^(Real.sqrt $ Nat.card (R n p r hrnz hp hnnoprdivs)) - 1 := this
     sorry
-    -- have := something like: if a < b as naturals, then a : ℝ < b : ℝ.
-    -- apply lt_of_lt_of_le _ this
