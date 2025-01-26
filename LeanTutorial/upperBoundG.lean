@@ -1,7 +1,7 @@
 import Mathlib
 import LeanTutorial.basic
 
-variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)]
+variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)]
   (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hn_gt_one : n > 1)
   (childs_binomial_theorem : ∀ a ∈ Finset.range (A n r + 1),
     (α p r + ↑ a)^n = α p r^n + ↑ a)
@@ -13,14 +13,16 @@ def ℓ (ij : ℕ × ℕ) : (ZMod r)ˣ
 def m (ij : ℕ × ℕ) : ℕ
   := n ^ ij.1 * p ^ ij.2
 
-include hnodd hnnotperfpow in
+include hnodd hnnotperfpow hn_gt_one in
 lemma distinct : Function.Injective (m n p)
   := by
+  -- alternative: use the multiplicity of some prime q ≠ p in n to determine i, and then j is also fixed.
+  -- ask Alain.
   intro ⟨ i₁, j₁ ⟩ ⟨ i₂, j₂ ⟩ eq
   wlog iineq : i₁ ≥ i₂
-  . have fact : i₁ ≤ i₂ := by refine Nat.le_of_not_ge (by assumption)
+  . have fact : i₁ ≤ i₂ := by refine Nat.le_of_not_ge iineq
     symm
-    exact this n p hnnotperfpow hnodd i₂ j₂ i₁ j₁ eq.symm fact
+    exact this n p hnnotperfpow hnodd hn_gt_one i₂ j₂ i₁ j₁ eq.symm fact
 
   unfold m at eq
   simp only [Prod.mk.injEq]
@@ -68,32 +70,63 @@ lemma distinct : Function.Injective (m n p)
     _     = p ^ j := rfl
 
   let k := multiplicity p n
-  have : p^k ∣ n := pow_multiplicity_dvd p n
-  have : p^k ≠ n := λ f ↦ hnnotperfpow $ by
+  have n_not_power_of_p : p^k ≠ n := λ f ↦ hnnotperfpow $ by
     use p, k
     constructor
     . exact Nat.Prime.one_lt (inferInstanceAs (Fact p.Prime)).out
     constructor
-    . sorry
+    . by_contra hk
+      rw [ge_iff_le, not_le] at hk
+      have : k = 0 ∨ k = 1 := sorry -- ask Alain
+      cases this with
+      | inl kzero => simp[kzero] at f; rw[f] at hn_gt_one; exact Nat.lt_irrefl n $ gt_iff_lt.mp hn_gt_one
+      | inr kone => simp[kone] at f; sorry -- then n is prime.
+      -- todo: add assumption that n is not prime.
     . exact f
 
-  sorry
+  suffices : i = 0
+  . simp only [this, true_and]
+    simp only [this, pow_zero] at eq
+    replace eq := eq.symm
+    by_contra j_nzero
+    rw [pow_eq_one_iff j_nzero] at eq
+    exact Nat.Prime.ne_one (pprime.out) eq
+
+  by_contra i_nzero
+  have := (calc
+    i * multiplicity p n = multiplicity p (n^i) := Eq.symm $
+      FiniteMultiplicity.multiplicity_pow
+        (Nat.Prime.prime pprime.out)
+        (Nat.finiteMultiplicity_iff.mpr
+          (And.intro (Nat.Prime.ne_one pprime.out) (by linarith)))
+    _ = multiplicity p (p^j) := by rw[eq]
+    _ = j := multiplicity_pow_self_of_prime (Nat.Prime.prime pprime.out) j)
+
+  rw[← this, mul_comm, pow_mul, pow_left_inj₀ (Nat.zero_le _) (Nat.zero_le _) i_nzero] at eq
+  unfold k at n_not_power_of_p
+  exfalso
+  exact n_not_power_of_p eq.symm
 
 noncomputable def T : Finset (ℕ × ℕ)
-  := let K := (Finset.range (Nat.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))));
-    Finset.product K K
+  := let K := Finset.range $ Nat.floor (Real.sqrt $ Nat.card $ R n p r hrnz hp hnnoprdivs) + 1
+    K ×ˢ K
 
--- lemma cardT : (R n p r hrnz hp hnnoprdivs).carrier.toFinset.card < (T p r n).card
---   := by
---   -- case on whether R is a square
---   sorry
+omit [Fact (Nat.Prime p)] in
+lemma cardT : Nat.card (R n p r hrnz hp hnnoprdivs) < Nat.card (T n p r hrnz hp hnnoprdivs)
+  := by
+  unfold T
+  simp only [Nat.card_eq_fintype_card, Fintype.card_coe, Finset.card_product,
+    Real.nat_floor_real_sqrt_eq_nat_sqrt, Finset.card_range, gt_iff_lt]
+  exact Nat.sqrt_lt.mp $ lt_add_one _
 
--- #check λ (n : ℕ) ↦ Finset.exists_ne_map_eq_of_card_lt_of_maps_to
---   (s := T p r n)
---   (t := Set.toFinset (R p r n).carrier)
---   (cardT _ _ _)
---   (f := ℓ p n)
+-- #check Finset.exists_ne_map_eq_of_card_lt_of_maps_to
+--   (s := T n p r hrnz hp hnnoprdivs)
+--   (t := Set.toFinset (R n p r hrnz hp hnnoprdivs))
+--   (cardT _ _ _ _ _ _)
+--   (f := ℓ n p r hrnz hp hnnoprdivs)
 
 
 lemma upper_bound_G : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
   := sorry
+  -- by
+  -- obtain := Finset.exists_ne_map_eq_of_card_lt_of_maps_to
