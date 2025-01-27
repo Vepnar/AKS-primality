@@ -8,11 +8,24 @@ variable
 def m (ij : ℕ × ℕ) : ℕ
   := n ^ ij.1 * p ^ ij.2
 
+omit pprime in
+lemma ub_m (hn : n ≥ 1) (hp : p ≥ 1) (C : ℕ) (ij : ℕ × ℕ) (h₁ : ij.1 ≤ C) (h₂ : ij.2 ≤ C)
+  : m n p ij ≤ n^C * p^C := by
+  unfold m
+  apply Nat.mul_le_mul
+  repeat
+    (apply Nat.pow_le_pow_of_le_right; assumption; assumption)
+
+omit pprime in
+lemma lb_m (hn : n ≥ 1) (hp : p ≥ 1) (ij : ℕ × ℕ)
+  : 1 ≤ m n p ij := by
+  unfold m
+  apply one_le_mul
+  repeat (apply one_le_pow₀; assumption)
+
 include hn_not_power_of_p hn_gt_one in
 lemma distinct : Function.Injective (m n p)
   := by
-  -- alternative: use the multiplicity of some prime q ≠ p in n to determine i, and then j is also fixed.
-  -- ask Alain.
   intro ⟨ i₁, j₁ ⟩ ⟨ i₂, j₂ ⟩ eq
   wlog iineq : i₁ ≥ i₂
   . have fact : i₁ ≤ i₂ := by refine Nat.le_of_not_ge iineq

@@ -350,11 +350,5 @@ def R : Subgroup ((ZMod r)ˣ)
       p' n p r hrnz hp hnnoprdivs
     }
 
-instance instRFinite : Finite (R n p r hrnz hp hnnoprdivs : Set (ZMod r)ˣ) :=
-  Finite.Set.subset Set.univ sorry
-
-instance instRFintype : Fintype ↑(R n p r hrnz hp hnnoprdivs : Set (ZMod r)ˣ)
-  := sorry
-
--- def R' : Finset ((ZMod r)ˣ)
---   := Set.toFinset (R n p r hrnz hp hnnoprdivs).carrier
+noncomputable instance instRFintype : Fintype ↑(R n p r hrnz hp hnnoprdivs : Set (ZMod r)ˣ)
+  := Fintype.ofFinite ↑↑(R n p r hrnz hp hnnoprdivs)

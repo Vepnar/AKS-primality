@@ -10,8 +10,6 @@ theorem AKS (n r : ℕ) (hn: n ≥ 2) (rpos : 0 < r) (hr: r < n) (hnorder : orde
     constructor
     . intro ⟨ hnnotperfpow, hnnoprdivs, last_prop⟩
       by_contra nnotprime
-      let factors := Nat.primeFactors n
-      have := Nat.nonempty_primeFactors.mpr hn
       let p : ℕ := Nat.minFac n
       have hp : p ∣ n := Nat.minFac_dvd n
       haveI : Fact (p.Prime) := Fact.mk (Nat.minFac_prime (ne_of_lt hn).symm)
@@ -22,26 +20,12 @@ theorem AKS (n r : ℕ) (hn: n ≥ 2) (rpos : 0 < r) (hr: r < n) (hnorder : orde
         --lower_bound_G n p r hrnz hp hnnoprdivs
 
       have upperboundG : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
-        := upper_bound_G n p r hrnz hp hnnoprdivs
+        := sorry
+        -- upper_bound_G n p r hrnz hp hnnoprdivs
 
       have : (Nat.card (G n p r hrnz) : ℝ) < Nat.card (G n p r hrnz) := lt_of_le_of_lt upperboundG lowerboundG
 
       exact lt_irrefl (Nat.card (G n p r hrnz) : ℝ) this
-
-      -- UPPER BOUND
-      -- have : ∃ i j I J : ℕ, (n^i * p^j) ≡ (n^I * p^J) [MOD r] := by sorry
-      -- have : i ∈ S n p r := by sorry -- lemma 4.1
-      -- have : j ∈ S n p r := by sorry -- lemma 4.1
-      -- have : I ∈ S n p r := by sorry -- lemma 4.1
-      -- have : J ∈ S n p r := by sorry -- lemma 4.1
-      -- have : Nat.card G | nⁱ * pʲ - nᴵ * pᴶ := by sorry -- lemma 4.2
-      -- have : Nat.card G ≤ |nⁱ * pʲ - nᴵ * pᴶ| ≤ (n*p)^(√ Nat.card R) - 1 < n^(2√ Nat.card R)-1 := by sorry -- results above?
-      -- have Gup : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(√ (Nat.card (R n p r hrnz hp hnnoprdivs)))-1 := by sorry -- result above with replacing n with n/p as n/p is in S so also that proof
-
-      -- -- LOWER BOUND
-      -- have Rd : d ≤ Nat.card (R n p r hrnz hp hnnoprdivs) := by sorry -- d > (log n )^2, the order of n mod r by assumption? (thats what is in the text)
-      -- have RB : ⌊√ ↑ (Nat.card (R n p r hrnz hp hnnoprdivs)) * Real.logb 2 n⌋ < Nat.card (R n p r hrnz hp hnnoprdivs)  := by sorry -- i guess the result above?
-      -- have : (n : ℝ)^(√ ↑ (Nat.card (R n p r hrnz hp hnnoprdivs)))-1 < Nat.card (G n p r hrnz) := by sorry -- lemma 43
 
     . intro nprime
       haveI : Fact (n.Prime) := Fact.mk nprime

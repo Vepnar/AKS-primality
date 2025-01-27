@@ -49,6 +49,9 @@ lemma cardRgtB : Nat.card (R n p r hrnz hp hnnoprdivs) > B n p r hrnz hp hnnoprd
     exact hordern
   . sorry
 
+lemma p_gt_B : p > B n p r hrnz hp hnnoprdivs
+  := sorry
+
 open Polynomial
 
 noncomputable def prod_factors (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1)))
@@ -112,9 +115,26 @@ lemma roots_prod_factors (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs +
   . intro ⟨b, hb₁, hb₂⟩
     simp_rw [this, Multiset.mem_singleton, neg_inj] at hb₂
 
-    -- show that this is enough to conclude that a = b
-    sorry
-  sorry
+    have : a.val = b.val := by
+      have hineqa : a < p := lt_of_le_of_lt
+        (Nat.le_of_lt_add_one $ Finset.mem_range.mp a.property)
+        (p_gt_B n p r hrnz hp hnnoprdivs)
+
+      have hineqb : b < p := lt_of_le_of_lt
+        (Nat.le_of_lt_add_one $ Finset.mem_range.mp b.property)
+        (p_gt_B n p r hrnz hp hnnoprdivs)
+
+      calc
+      a.val = ((a : ℕ) : ZMod p).val := (ZMod.val_natCast_of_lt hineqa).symm
+      _ = ((b : ℕ) : ZMod p).val := by rw[hb₂]
+      _ = b.val := ZMod.val_natCast_of_lt hineqb
+
+    aesop
+
+  rw [Finset.prod_ne_zero_iff]
+  intro a ha hpoly
+  replace hpoly := congrArg (Polynomial.coeff . 1) hpoly
+  simp at hpoly
 
 noncomputable def prod_factors₂ (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1))) : G n p r hrnz
   := by
