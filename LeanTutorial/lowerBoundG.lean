@@ -2,11 +2,11 @@ import Mathlib
 import LeanTutorial.basic
 import LeanTutorial.lemma_43
 
-variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)]
+variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)]
   (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hn_gt_one : n > 1)
   (childs_binomial_theorem : ∀ a ∈ Finset.range (A n r + 1),
     (α p r + ↑ a)^n = α p r^n + ↑ a)
-  (hordern : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2 ⌋₊)
+  (hordern : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2⌋₊)
 
 omit [Fact (Nat.Prime p)] in
 lemma ord_R : Nat.card (R n p r hrnz hp hnnoprdivs) ≥ d n r := by
@@ -31,26 +31,57 @@ lemma ord_R : Nat.card (R n p r hrnz hp hnnoprdivs) ≥ d n r := by
   simp only [Subgroup.orderOf_mk, n', ← orderOf_units, ZMod.coe_unitOfCoprime]
   rfl
 
+omit pprime in
+lemma ord_R₂ : Nat.card (R n p r hrnz hp hnnoprdivs) ≤ r := by
+  trans Nat.card (ZMod r)ˣ
+  . exact Subgroup.card_le_card_group (R n p r hrnz hp hnnoprdivs)
+  trans Nat.card (ZMod r)
+  -- TODO: refactor everything to replace hrnz by a typeclass argument
+  . haveI : NeZero r := NeZero.mk hrnz
+    apply Nat.card_le_card_of_injective Units.val Units.ext
+  . apply le_of_eq $ Nat.card_zmod r
+
 noncomputable def B : ℕ :=
   ⌊ Real.logb 2 n * Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs)) ⌋₊
 
-lemma AgtB : A n r > B n p r hrnz hp hnnoprdivs := by
+omit pprime in
+include hn_gt_one in
+lemma AgtB : A n r ≥ B n p r hrnz hp hnnoprdivs := by
   unfold A B
-  sorry
+  apply Nat.floor_le_floor
+  apply (mul_le_mul_left (Real.logb_pos (by norm_num) (Nat.one_lt_cast.mpr hn_gt_one))).mpr
+  rw[Real.sqrt_le_sqrt_iff (Nat.cast_nonneg _), Nat.cast_le]
+  exact ord_R₂ n p r hrnz hp hnnoprdivs
 
-include hordern in
+omit pprime in
+include hordern hn_gt_one in
 lemma cardRgtB : Nat.card (R n p r hrnz hp hnnoprdivs) > B n p r hrnz hp hnnoprdivs
   := by
-  apply lt_of_lt_of_le _ (ord_R n p r hrnz hp hnnoprdivs)
-  trans ⌊ (Real.logb 2 n)^2 ⌋₊
   rify
-  rotate_left
-  . unfold d
-    exact hordern
-  . sorry
 
+  have annoying : 0 ≤ Real.logb 2 ↑n * √↑(Nat.card ↥(R n p r hrnz hp hnnoprdivs))
+   := by
+    apply mul_nonneg
+    . exact Real.logb_nonneg (by norm_num) (Nat.one_le_cast.mpr (le_of_lt hn_gt_one))
+    . exact Real.sqrt_nonneg _
+
+  apply lt_of_le_of_lt (b := Real.logb 2 n * Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs)))
+  . unfold B
+    apply Nat.floor_le
+    exact annoying
+  apply (sq_lt_sq₀ annoying (Nat.cast_nonneg _)).mp
+  rw[mul_pow, Real.sq_sqrt (Nat.cast_nonneg _)]
+  nth_rw 2 [sq]
+  simp only [Nat.cast_pos, Nat.card_pos, mul_lt_mul_right]
+  apply Nat.lt_of_floor_lt (lt_of_lt_of_le hordern (ord_R n p r hrnz hp hnnoprdivs))
+
+include hordern hn_gt_one in
 lemma p_gt_B : p > B n p r hrnz hp hnnoprdivs
-  := sorry
+  := lt_of_lt_of_le (cardRgtB n p r hrnz hp hnnoprdivs hn_gt_one hordern) $ by
+    trans r
+    . exact ord_R₂ n p r hrnz hp hnnoprdivs
+    by_contra h
+    exact hnnoprdivs p pprime.out (And.intro hp (le_of_not_ge h))
 
 open Polynomial
 
@@ -67,7 +98,7 @@ lemma prod_factors_deg (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1
   rw [Finset.sum_congr rfl this]
   exact Eq.symm (Finset.cast_card T)
 
-include hordern in
+include hordern hn_gt_one in
 lemma deg_of_non_univ (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1)))
   (hT : T ≠ Finset.univ) : (prod_factors n p r hrnz hp hnnoprdivs T).degree < Nat.card (R n p r hrnz hp hphnnoprdivs)
   := by
@@ -77,8 +108,9 @@ lemma deg_of_non_univ (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1)
   simp only [Finset.mem_range, Fintype.card_coe, Finset.card_range] at this
   calc
     T.card ≤ B n p r hrnz hp hnnoprdivs := Nat.le_of_lt_succ this
-    _ < _ := cardRgtB n p r hrnz hp hnnoprdivs hordern
+    _ < _ := cardRgtB n p r hrnz hp hnnoprdivs hn_gt_one hordern
 
+include hn_gt_one in
 lemma prod_factors_in_H (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1)))
   : AdjoinRoot.mk (f p r) (prod_factors n p r hrnz hp hnnoprdivs T) ∈ H n p r
   := by
@@ -90,9 +122,10 @@ lemma prod_factors_in_H (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 
   use c
   simp only [α, map_natCast, and_true]
   have : c < B n p r hrnz hp hnnoprdivs + 1 := Finset.mem_range.mp c.property
-  have := AgtB n p r hrnz hp hnnoprdivs
+  have := AgtB n p r hrnz hp hnnoprdivs hn_gt_one
   linarith
 
+include hn_gt_one hordern in
 lemma roots_prod_factors (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs + 1)))
   : ∀ a : ↥ (Finset.range (B n p r hrnz hp hnnoprdivs + 1)),
       a ∈ T ↔ - ↑ a ∈ (prod_factors n p r hrnz hp hnnoprdivs T).roots
@@ -118,11 +151,11 @@ lemma roots_prod_factors (T : Finset (Finset.range (B n p r hrnz hp hnnoprdivs +
     have : a.val = b.val := by
       have hineqa : a < p := lt_of_le_of_lt
         (Nat.le_of_lt_add_one $ Finset.mem_range.mp a.property)
-        (p_gt_B n p r hrnz hp hnnoprdivs)
+        (p_gt_B n p r hrnz hp hnnoprdivs hn_gt_one hordern)
 
       have hineqb : b < p := lt_of_le_of_lt
         (Nat.le_of_lt_add_one $ Finset.mem_range.mp b.property)
-        (p_gt_B n p r hrnz hp hnnoprdivs)
+        (p_gt_B n p r hrnz hp hnnoprdivs hn_gt_one hordern)
 
       calc
       a.val = ((a : ℕ) : ZMod p).val := (ZMod.val_natCast_of_lt hineqa).symm
@@ -145,10 +178,9 @@ noncomputable def prod_factors₂ (T : Finset (Finset.range (B n p r hrnz hp hnn
     intro a ha haint
     exact nz_of_β_add_x n p r hrnz hn_gt_one childs_binomial_theorem hordern a $ by
       simp only [Finset.mem_range]
-      trans B n p r hrnz hp hnnoprdivs + 1
-      exact ha
-      rw [add_lt_add_iff_right]
-      exact AgtB n p r hrnz hp hnnoprdivs
+      apply lt_of_lt_of_le ha
+      rw [add_le_add_iff_right]
+      exact AgtB n p r hrnz hp hnnoprdivs hn_gt_one
 
   simp [prod_factors, Units.mk0, G]
   apply prod_mem
@@ -161,7 +193,7 @@ noncomputable def prod_factors₂ (T : Finset (Finset.range (B n p r hrnz hp hnn
     use c
     simp only [and_true]
     have : c < B n p r hrnz hp hnnoprdivs + 1 := Finset.mem_range.mp c.property
-    have := AgtB n p r hrnz hp hnnoprdivs
+    have := AgtB n p r hrnz hp hnnoprdivs hn_gt_one
     linarith -- almost the same as prod_factors_in_H, maybe could extract it out somehow.
 
   calc
@@ -187,18 +219,18 @@ lemma prod_factors₃_injective : Function.Injective (prod_factors₃ n p r hrnz
     ?_
     ?_
     hxy
-    (deg_of_non_univ n p r hrnz hp hnnoprdivs hordern S.val S.property)
-    (deg_of_non_univ n p r hrnz hp hnnoprdivs hordern T.val T.property)
+    (deg_of_non_univ n p r hrnz hp hnnoprdivs hn_gt_one hordern S.val S.property)
+    (deg_of_non_univ n p r hrnz hp hnnoprdivs hn_gt_one hordern T.val T.property)
 
   rotate_left 1
-  . have := prod_factors_in_H n p r hrnz hp hnnoprdivs S
+  . have := prod_factors_in_H n p r hrnz hp hnnoprdivs hn_gt_one S
     simp [Gmonoid]
     use AdjoinRoot.mk (f p r) (prod_factors n p r hrnz hp hnnoprdivs S)
     constructor
     . exact this
     . simp only [φ, AdjoinRoot.algHomOfDvd, Finset.univ_eq_attach, ne_eq, AdjoinRoot.liftHom_mk,
         AdjoinRoot.aeval_eq]
-  . have := prod_factors_in_H n p r hrnz hp hnnoprdivs T
+  . have := prod_factors_in_H n p r hrnz hp hnnoprdivs hn_gt_one T
     simp [Gmonoid]
     use AdjoinRoot.mk (f p r) (prod_factors n p r hrnz hp hnnoprdivs T)
     constructor
@@ -212,8 +244,7 @@ lemma prod_factors₃_injective : Function.Injective (prod_factors₃ n p r hrnz
   intro a
 
   rw [roots_prod_factors, roots_prod_factors, this]
-
-
+  repeat (assumption)
 
 include hn_gt_one childs_binomial_theorem hordern in
 lemma lower_bound_G : Nat.card (G n p r hrnz) > (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
