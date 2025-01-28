@@ -2,7 +2,9 @@ import Mathlib
 import LeanTutorial.basic
 open Polynomial
 
-variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)] (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n)  [hge1: Fact (n ≥ 1)] -- use a weaker assumption, have a bit more general lemma
+variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)]
+  (hnnoprdivs : no_prime_divisors_below n r)
+  (hnnotperfpow : ¬ is_perfect_power n)  [hge1: Fact (n ≥ 1)] -- use a weaker assumption, have a bit more general lemma
 
 lemma logb_base2_ge_one {n : ℕ} (hn : n ≥ 2) : 1 ≤ Real.logb 2 n := by
     cases n
@@ -28,6 +30,67 @@ lemma nge2 (hn' : p ∣ n) : n ≥ 2 := by
     have p_le_n : p ≤ n := Nat.le_of_dvd zero_lt_n hn'
     have pge2 : 2 ≤ p := Nat.Prime.two_le pprime
     apply lt_of_lt_of_le pge2 p_le_n
+
+lemma lemma43' (g q : Polynomial (ZMod p))
+  (hg : AdjoinRoot.mk (h p r) g ∈ Gmonoid n p r hrnz) (hq : AdjoinRoot.mk (h p r) q ∈ Gmonoid n p r hrnz)
+  (hmod : AdjoinRoot.mk (h p r) g = AdjoinRoot.mk (h p r) q)
+  (hdegg : Polynomial.natDegree g < Nat.card (R n p r hrnz hp hnnoprdivs)) (hdegq : Polynomial.natDegree q < Nat.card (R n p r hrnz hp hnnoprdivs))
+  : g = q := by
+  let Δ := g - q
+  let Δ' := AdjoinRoot.mk (h p r) Δ
+
+  -- have lem_g : AdjoinRoot.mk (f p r) g ∈ H n p r := sorry
+
+  obtain ⟨g', hg'₁, hg'₂⟩ := hg
+  obtain ⟨q', hq'₁, hq'₂⟩ := hq
+
+  have : ∀ k ∈ S n p r, Δ.aeval (β p r^k) = 0
+    := by
+    intro k hk
+    unfold Δ
+    simp
+    suffices : g.aeval (α p r^k) = q.aeval (α p r^k)
+    . have := congrArg (φ p r hrnz) this
+      rw [← aeval_algHom_apply (φ p r hrnz), ← aeval_algHom_apply (φ p r hrnz)] at this
+      simp[φ, α, AdjoinRoot.algHomOfDvd_apply_root] at this
+      exact sub_eq_zero_of_eq this
+    have := (restatement_S₂ n p r k).mp hk g sorry
+    rw[this, (restatement_S₂ n p r k).mp hk q sorry]
+    congr 1
+    -- hmmmmm. on the right track though.
+    sorry
+
+  have : Δ.natDegree < Nat.card (R n p r hrnz hp hnnoprdivs) := by
+    have : 1 ≤ Nat.card (R n p r hrnz hp hnnoprdivs) := by sorry
+    rw [Nat.lt_iff_le_pred this] at hdegg hdegq ⊢
+    unfold Δ
+    exact (Polynomial.natDegree_sub_le_iff_left hdegq).mpr hdegg
+
+  have : ∀ k ∈ R n p r hrnz hp hnnoprdivs, ∃ k' ∈ S n p r, k' = k.val
+    := sorry
+  let fn (k : R n p r hrnz hp hnnoprdivs) : S n p r := sorry
+  have : ∀ (k : R n p r hrnz hp hnnoprdivs), k.val.val = fn k := sorry
+  have : Function.Injective fn := sorry
+
+  -- use Polynomial.card_roots'
+
+  sorry
+
+  -- have helper' (k : ℕ) : (h p r).aeval (β p r^k) = 0 := sorry
+
+  -- have : ∀ k ∈ S n p r, Δ'.liftHom (h p r) (β p r^k) (helper' k) = 0
+  --   := by
+  --   intro k hk
+  --   obtain ⟨g', hg'₁, hg'₂⟩ := hg
+  --   obtain ⟨q', hq'₁, hq'₂⟩ := hq
+  --   calc
+  --   Δ'.liftHom (h p r) (β p r^k) (helper' k)
+  --     = (AdjoinRoot.mk (h p r) g).liftHom (h p r) (β p r^k) (helper' k) - (AdjoinRoot.mk (h p r) q).liftHom (h p r) (β p r^k) (helper' k) := by simp[Δ, Δ']
+  --   _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g').liftHom (h p r) (β p r^k) (helper' k) - (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q').liftHom (h p r) (β p r^k) (helper' k) := by rw[← hg'₂,← hq'₂]; rfl
+  --   _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g').liftHom (h p r) (β p r^k) (helper' k) - (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q').liftHom (h p r) (β p r^k) (helper' k) := by rfl
+  --   _ = 0 := sorry
+
+  -- sorry
 
 lemma lemma43 (g q : Polynomial (ZMod p))
   (hg : AdjoinRoot.mk (h p r) g ∈ Gmonoid n p r hrnz) (hq : AdjoinRoot.mk (h p r) q ∈ Gmonoid n p r hrnz)

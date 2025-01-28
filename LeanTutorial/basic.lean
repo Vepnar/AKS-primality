@@ -284,6 +284,10 @@ def S : Set ℕ := {
     g^k = g.liftHom (f _ _) (α _ _^k) (helper _ _)
   }
 
+omit [Fact (Nat.Prime p)] in
+lemma mk_C_eq_of : (AdjoinRoot.mk (f p r)).comp C = AdjoinRoot.of (f p r)
+  := RingHom.ext AdjoinRoot.mk_C
+
 lemma pinS : p ∈ S n p r := by
   intro g hg
   have ⟨q, hq⟩ := AdjoinRoot.mk_surjective g
@@ -294,13 +298,10 @@ lemma pinS : p ∈ S n p r := by
     simp
     rfl
 
-  have idk : (AdjoinRoot.mk (f p r)).comp C = AdjoinRoot.of (f p r)
-  := RingHom.ext AdjoinRoot.mk_C
-
   calc
   _ = AdjoinRoot.mk (f _ _) (q.eval₂ C (X^p)):= by rw[← this]; rfl
   _ = q.eval₂ ((AdjoinRoot.mk (f _ _)).comp C) (AdjoinRoot.mk (f _ _) (X^p)) := Polynomial.hom_eval₂ _ _ _ _
-  _ = q.eval₂ (AdjoinRoot.of (f _ _)) (AdjoinRoot.root (f _ _)^p) := by simp only [idk,map_pow, AdjoinRoot.mk_X]
+  _ = q.eval₂ (AdjoinRoot.of (f _ _)) (AdjoinRoot.root (f _ _)^p) := by simp only [mk_C_eq_of, map_pow, AdjoinRoot.mk_X]
   _ = _ := rfl
 
 include childs_binomial_theorem in
@@ -320,6 +321,41 @@ lemma ninS : n ∈ S n p r := by
   . intro x y hx hy hx₂ hy₂
     simp only [map_natCast, map_mul]
     rw [mul_pow,hx₂, hy₂]
+
+-- TODO: cleanup + maybe change definition of S??
+-- although the way it's stated here is how I prefer to think of it.
+lemma restatement_S (k : ℕ)
+  : k ∈ S n p r ↔ ∀ g : (ZMod p)[X], AdjoinRoot.mk (f p r) g ∈ H n p r → AdjoinRoot.mk (f p r) (g.comp (X^k)) = AdjoinRoot.mk (f p r) (g^k)
+  := by
+  constructor
+  . intro hk g hg
+    unfold comp
+    rw[map_pow,hom_eval₂,mk_C_eq_of]
+    symm
+    calc
+    (AdjoinRoot.mk (f p r)) g ^ k = (AdjoinRoot.mk (f p r) g).liftHom (f _ _) (α _ _^k) (helper _ _) := hk _ hg
+    _ = g.aeval (α _ _^k) := by exact rfl
+    _ = _ := by simp[aeval, α]; congr
+  . intro hk q
+    refine AdjoinRoot.induction_on (f p r) q ?_
+    intro s hs
+    unfold α
+    have := hk s hs
+    rw [map_pow] at this
+    rw[← this, AdjoinRoot.liftHom_mk]
+    unfold comp
+    rw[hom_eval₂, map_pow, AdjoinRoot.mk_X, mk_C_eq_of]
+    unfold aeval eval₂AlgHom' Algebra.ofId
+    simp
+
+lemma restatement_S₂ (k : ℕ)
+  : k ∈ S n p r ↔ ∀ g : (ZMod p)[X], AdjoinRoot.mk (f p r) g ∈ H n p r → g.aeval (α p r^k) = AdjoinRoot.mk (f p r) g^k
+  := by
+  rw[restatement_S]
+  have : ∀ g : (ZMod p)[X], (AdjoinRoot.mk (f p r)) (g.comp (X ^ k)) = g.aeval (α p r^k) := by
+    simp[comp, α, hom_eval₂,mk_C_eq_of, aeval, Algebra.ofId]
+  simp_rw[this]
+  rfl
 
 include hrnz hnnoprdivs in
 lemma n_coprime_r : n.Coprime r := by
