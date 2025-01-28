@@ -3,12 +3,12 @@ import LeanTutorial.basic
 import LeanTutorial.lowerBoundG
 import LeanTutorial.upperBoundG
 
-theorem AKS (n r : ℕ) (hn: n ≥ 2) (rpos : 0 < r) (hr: r < n) (hnorder : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2 ⌋₊):
+theorem AKS (n r : ℕ) (hn: n ≥ 2) (rpos : 0 < r) (hr: r < n) (hnodd : Odd n) (hnorder : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2 ⌋₊):
     (¬is_perfect_power n ∧ no_prime_divisors_below n r
     ∧ (∀ a ∈ Finset.range (A n r + 1), (α n r + ↑ a)^n = α n r^n + ↑ a)) ↔ Nat.Prime n := by
     have hrnz : r ≠ 0 := (ne_of_lt rpos).symm
     constructor
-    . intro ⟨ hnnotperfpow, hnnoprdivs, last_prop⟩
+    . intro ⟨ hnnotperfpow, hnnoprdivs, childs_binomial_theorem⟩
       by_contra nnotprime
       let p : ℕ := Nat.minFac n
       have hp : p ∣ n := Nat.minFac_dvd n
@@ -20,8 +20,24 @@ theorem AKS (n r : ℕ) (hn: n ≥ 2) (rpos : 0 < r) (hr: r < n) (hnorder : orde
         --lower_bound_G n p r hrnz hp hnnoprdivs
 
       have upperboundG : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
-        := sorry
-        -- upper_bound_G n p r hrnz hp hnnoprdivs
+        := by
+        have childs_bin_thm : ∀ a ∈ Finset.range (A n r + 1), (α p r + ↑a) ^ n = α p r ^ n + ↑a
+          := by
+          intro a ha
+          haveI : CharP (AdjoinRoot (f p r)) p := instCharPAdjoinRootF p r hrnz
+
+          let φ := ZMod.castHom hp (AdjoinRoot (f p r))
+          have h : (f n r).eval₂ φ (α p r) = 0 := by
+            simp[φ, α, f]
+            calc
+            AdjoinRoot.root (f p r) ^ r - 1 = AdjoinRoot.mk (f p r) (f p r) := by unfold f; rw[map_sub, map_pow, AdjoinRoot.mk_X, map_one]
+            _ = 0 := AdjoinRoot.mk_self
+          let ψ := AdjoinRoot.lift φ (α p r) h
+          have := congrArg ψ $ childs_binomial_theorem a ha
+          simp[ψ, α, h] at this
+          exact this
+
+        exact upper_bound_G n p r hrnz hp hnnoprdivs hnnotperfpow hnodd hn childs_bin_thm hnorder nnotprime
 
       have : (Nat.card (G n p r hrnz) : ℝ) < Nat.card (G n p r hrnz) := lt_of_le_of_lt upperboundG lowerboundG
 

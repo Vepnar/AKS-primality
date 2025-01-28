@@ -9,12 +9,20 @@ def m (ij : ℕ × ℕ) : ℕ
   := n ^ ij.1 * p ^ ij.2
 
 omit pprime in
-lemma ub_m (hn : n ≥ 1) (hp : p ≥ 1) (C : ℕ) (ij : ℕ × ℕ) (h₁ : ij.1 ≤ C) (h₂ : ij.2 ≤ C)
-  : m n p ij ≤ n^C * p^C := by
+lemma ub_m (hn : n ≥ 1) (hp : p ≥ 1) (C : ℝ) (ij : ℕ × ℕ) (h₁ : ij.1 ≤ C) (h₂ : ij.2 ≤ C)
+  : m n p ij ≤ (n : ℝ)^C * (p : ℝ)^C := by
   unfold m
-  apply Nat.mul_le_mul
-  repeat
-    (apply Nat.pow_le_pow_of_le_right; assumption; assumption)
+  rw[Nat.cast_mul]
+  apply mul_le_mul
+  repeat (
+    simp
+    rw[← Real.rpow_natCast]
+    apply Real.rpow_le_rpow_of_exponent_le (Nat.one_le_cast.mpr (by assumption))
+    assumption
+  )
+  exact Nat.cast_nonneg _
+  apply Real.rpow_nonneg ?_ C
+  exact Nat.cast_nonneg _
 
 omit pprime in
 lemma lb_m (hn : n ≥ 1) (hp : p ≥ 1) (ij : ℕ × ℕ)

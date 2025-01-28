@@ -43,14 +43,14 @@ noncomputable def T : Finset (ℕ × ℕ)
 
 omit pprime in
 lemma boundT (ij : ℕ × ℕ) (hij : ij ∈ T n p r hrnz hp hnnoprdivs)
-  : ij.1 < Nat.floor (Real.sqrt $ Nat.card $ R n p r hrnz hp hnnoprdivs) + 1
-  ∧ ij.2 < Nat.floor (Real.sqrt $ Nat.card $ R n p r hrnz hp hnnoprdivs) + 1
+  : ij.1 ≤ (Real.sqrt $ Nat.card $ R n p r hrnz hp hnnoprdivs)
+  ∧ ij.2 ≤ (Real.sqrt $ Nat.card $ R n p r hrnz hp hnnoprdivs)
   := by
-  simp [T] at hij
-
+  simp only [T, Real.nat_floor_real_sqrt_eq_nat_sqrt, Finset.mem_product, Finset.mem_range] at hij
+  obtain ⟨hi,hj⟩ := hij
   constructor
-  aesop
-  aesop
+  repeat
+    exact Trans.trans (Nat.cast_le.mpr (Nat.le_of_lt_succ (by assumption))) Real.nat_sqrt_le_real_sqrt
 
 omit pprime in
 lemma cardT : Nat.card (R n p r hrnz hp hnnoprdivs) < Nat.card (T n p r hrnz hp hnnoprdivs)
@@ -101,7 +101,7 @@ lemma div_dist_ineq {a b c : ℕ} (h : a ≡ b [MOD c]) (hab : a ≠ b) : c ≤ 
   exact Nat.le_of_dvd hzeroltab ((Nat.modEq_iff_dvd' (by linarith)).mp h.symm)
 
 lemma difference_bounded
-  (x y c C : ℤ)
+  (x y c C : ℝ)
   (hx₁ : c ≤ x) (hx₂ : x ≤ C)
   (hy₁ : c ≤ y) (hy₂ : y ≤ C)
   : |x - y| ≤ C - c
@@ -114,12 +114,25 @@ lemma difference_bounded
     assumption
 
   rw [abs_of_nonneg hxy]
-  omega
+  linarith
+
+lemma real_abs_eq_natabs (a b : ℤ) : ((a - b).natAbs : ℝ) = |(a : ℝ) - (b : ℝ)|
+  := by
+  rw[← Int.cast_sub, ← Int.cast_abs]
+  calc
+  ((a - b).natAbs : ℝ) = ↑ ((a - b).natAbs : ℤ) := rfl
+  _ = ↑ |a - b| := by congr; exact Int.natCast_natAbs (a - b)
 
 include hnodd hn_gt_one hnnotperfpow hnnotprime childs_binomial_theorem hordern in
 lemma upper_bound_G : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
   := by
-  have hn_over_p_gt_one : n/p > 1 := by sorry
+  have hn_over_p_gt_one : n/p > 1 := by
+    obtain ⟨c, hc⟩ := hp
+    rw[hc, mul_comm, Nat.mul_div_cancel _ (Nat.Prime.pos pprime.out)]
+    match c with
+    | 0 => rw[mul_zero] at hc; rw[hc] at hn_gt_one; contradiction
+    | 1  => rw[mul_one] at hc; rw[hc] at hnnotprime; exfalso; exact hnnotprime pprime.out
+    | c' + 2 => exact le_add_left (le_refl 2)
 
   have := Finset.exists_ne_map_eq_of_card_lt_of_maps_to
     (t := Set.toFinset (R n p r hrnz hp hnnoprdivs)) -- ask Alain
@@ -157,39 +170,42 @@ lemma upper_bound_G : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(Real.sqrt (Nat.card
     _ = m (n/p) p y := ℓ_equiv_m n p r hrnz hp hnnoprdivs y
 
   have := lemma42 n p r hrnz (m (n/p) p x) (m (n/p) p y) mxinS myinS mxeqvmy
-  have := div_dist_ineq this
+  have part₁ := div_dist_ineq this
     (Function.Injective.ne
       (distinct (n/p) p
         (n_over_p_not_power_of_p n p hp hnnotperfpow hn_gt_one hnnotprime)
         hn_over_p_gt_one)
       hxy₁)
 
-  let sqrt_R := Nat.floor (Real.sqrt $ Nat.card $ R n p r hrnz hp hnnoprdivs) + 1
+  let sqrt_R := √↑(Nat.card ↥(R n p r hrnz hp hnnoprdivs))
 
-  have lb_mx : (1 : ℤ) ≤ m (n/p) p x := by
+  have lb_mx : (1 : ℝ) ≤ m (n/p) p x := by
     have := lb_m (n/p) p (le_of_lt hn_over_p_gt_one) (Nat.Prime.pos pprime.out) x
-    zify at this
+    rify at this
     assumption
 
-  have ub_mx : (m (n/p) p x : ℤ) ≤ (n/p)^sqrt_R * p^sqrt_R
+  have ub_mx : (m (n/p) p x : ℤ) ≤ ((n/p) : ℝ)^sqrt_R * p^sqrt_R
     := by
     have := ub_m (n/p) p
       (le_of_lt hn_over_p_gt_one) (Nat.Prime.pos pprime.out)
-      sqrt_R x (le_of_lt (boundT n p r hrnz hp hnnoprdivs x hx).1) (le_of_lt (boundT n p r hrnz hp hnnoprdivs x hx).2)
-    zify at this
+      sqrt_R x (boundT n p r hrnz hp hnnoprdivs x hx).1 (boundT n p r hrnz hp hnnoprdivs x hx).2
+    rify at this
+    rw[Int.cast_natCast]
+    rw [Nat.cast_div_charZero hp] at this
     assumption
 
-  have lb_my : (1 : ℤ) ≤ m (n/p) p y := by
+  have lb_my : (1 : ℝ) ≤ m (n/p) p y := by
     have := lb_m (n/p) p (le_of_lt hn_over_p_gt_one) (Nat.Prime.pos pprime.out) y
-    zify at this
+    rify at this
     assumption
 
-  have ub_my : (m (n/p) p y : ℤ) ≤ (n/p)^sqrt_R * p^sqrt_R
+  have ub_my : (m (n/p) p y : ℤ) ≤ ((n/p) : ℝ)^sqrt_R * p^sqrt_R
     := by
     have := ub_m (n/p) p
       (le_of_lt hn_over_p_gt_one) (Nat.Prime.pos pprime.out)
-      sqrt_R y (le_of_lt (boundT n p r hrnz hp hnnoprdivs y hy).1) (le_of_lt (boundT n p r hrnz hp hnnoprdivs y hy).2)
-    zify at this
+      sqrt_R y (boundT n p r hrnz hp hnnoprdivs y hy).1 (boundT n p r hrnz hp hnnoprdivs y hy).2
+    rify at this
+    rw [Nat.cast_div_charZero hp] at this
     assumption
 
   have := difference_bounded (m (n/p) p x) (m (n/p) p y)
@@ -197,7 +213,20 @@ lemma upper_bound_G : Nat.card (G n p r hrnz) ≤ (n : ℝ)^(Real.sqrt (Nat.card
     lb_mx ub_mx
     lb_my ub_my
 
-  sorry
+  simp[sqrt_R] at this
 
-  -- by
-  -- obtain := Finset.exists_ne_map_eq_of_card_lt_of_maps_to
+  have n_div_p_nonneg : 0 ≤ (n : ℝ)/(p : ℝ)
+    := by
+    apply div_nonneg
+    repeat (exact Nat.cast_nonneg _)
+
+  calc
+  (Nat.card ↥(G n p r hrnz) : ℝ) ≤ ((m (n / p) p x : ℤ) - ↑(m (n / p) p y)).natAbs := by aesop
+  _ = |(m (n / p) p x : ℝ) - ↑(m (n / p) p y)| := real_abs_eq_natabs _ _
+  _ ≤ ((n/p) : ℝ) ^ sqrt_R  * (p : ℝ) ^ sqrt_R - 1 := this
+  _ = ((n/p : ℝ) * (p : ℝ)) ^ sqrt_R - 1 := by rw [Real.mul_rpow n_div_p_nonneg (Nat.cast_nonneg p)]
+  _ = (n : ℝ) ^ sqrt_R - 1 := by rw [div_mul_cancel_of_invertible]
+  _ ≤ (n : ℝ) ^ √↑(Nat.card ↥(R n p r hrnz hp hnnoprdivs)) - 1 := by
+    apply sub_le_sub_right
+    apply Real.rpow_le_rpow_of_exponent_le $ Nat.one_le_cast.mpr (le_of_lt hn_gt_one)
+    simp[sqrt_R]
