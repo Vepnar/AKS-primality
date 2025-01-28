@@ -26,7 +26,7 @@ lemma poly_div_lemma {R : Type*} [CommRing R] (a b c : ℕ)
   exact this
 
 include hn_gt_one childs_binomial_theorem in
-lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^d n r-1])
+lemma in_S_of_modeq (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^d n r-1])
   (hanz : a ≠ 0) (hbnz : b ≠ 0)
   : b ∈ S n p r := by
   have hrdiv : r ∣ n^d n r - 1 := by
@@ -131,10 +131,9 @@ lemma idkhowtonamethis (a b : ℕ) (ha : a ∈ S n p r) (eqmod : a ≡ b [MOD n^
   _ = g.liftHom (f p r) (α p r ^ a) (helper _ _) := ha g hg
   _ = g.liftHom (f p r) (α p r ^ b) (helper _ _) := by simp_rw[halphaab]
 
-lemma how_about_this (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3)
+lemma a_gcd_mul_self_sub_one_eq_one (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3)
   : a.gcd (b-1) = 1 := by
-  let c := b/a
-  have hc : b = a*c := by exact Eq.symm (Nat.mul_div_cancel' ha)
+  obtain ⟨c, hc⟩ := ha
   have : c ≠ 0 := λ czero ↦ by
     simp_all only [czero,mul_zero,nonpos_iff_eq_zero, one_ne_zero]
   have : c ≥ 1 := Nat.one_le_iff_ne_zero.mpr this
@@ -143,7 +142,7 @@ lemma how_about_this (a b : ℕ) (ha : a ∣ b) (hb : b ≥ 1) (haineq : a ≥ 3
     _ = a * c := by congr; exact Nat.sub_add_cancel this
     _ = b := hc.symm
 
-  have : b-1 = a*(c-1) + a-1 := by congr; exact this.symm
+  have : b-1 = a*(c-1) + a-1 := by rw[this]
   rw[this]
 
   have age1 : a ≥ 1 := by linarith
@@ -188,7 +187,7 @@ lemma ndivpinS : n/p ∈ S n p r := by
   have pkcoprime : Nat.Coprime p k := by
     unfold k
     apply Nat.coprime_iff_gcd_eq_one.mpr
-    exact how_about_this p (n ^ d n r)
+    exact a_gcd_mul_self_sub_one_eq_one p (n ^ d n r)
       (dvd_pow hp (Nat.not_eq_zero_of_lt hordern))
       (one_le_pow₀ (by linarith))
       (pge3 n p hp hnodd)
@@ -229,4 +228,4 @@ lemma ndivpinS : n/p ∈ S n p r := by
     . apply pow_in_S n p r
       exact pinS n p r
 
-  exact idkhowtonamethis n p r hn_gt_one childs_binomial_theorem a b ainS aequivb hanz hbnz
+  exact in_S_of_modeq n p r hn_gt_one childs_binomial_theorem a b ainS aequivb hanz hbnz

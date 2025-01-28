@@ -284,12 +284,6 @@ def S : Set ℕ := {
     g^k = g.liftHom (f _ _) (α _ _^k) (helper _ _)
   }
 
---noncomputable def polH (a : ℤ) : Polynomial ℤ := X + Poly.const a
-
---lemma fun_in_H (a : ℕ) (eₐ : ℕ) : ∀ g ∈ H, g = ∏₀≤ₐ≤A (X+a) ᵉ := by
-
--- HOW TO SHOW G IS A GROUP lemma Ggroup (G p r h (h_div p r hrnz) A) : IsSubgroup G := by sorry
-
 lemma pinS : p ∈ S n p r := by
   intro g hg
   have ⟨q, hq⟩ := AdjoinRoot.mk_surjective g

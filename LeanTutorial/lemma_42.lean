@@ -22,11 +22,10 @@ lemma lemma42 (a b : ℕ)
 
     let ab : (ZMod p)[X] := X^(a-b)-1
     have f_dvd_ab : f p r ∣ ab := by
-      let k := (a - b)/r
       have : r ∣ a-b := (Nat.modEq_iff_dvd' hineq).mp (Nat.ModEq.symm hab)
-      have : r * k = a-b := Nat.mul_div_cancel' this
+      obtain ⟨k, hk⟩ := this
       unfold ab
-      rw [←this]
+      rw [hk]
       have := sub_dvd_pow_sub_pow (X^r : (ZMod p)[X]) 1 k
       rw [one_pow, ← pow_mul] at this
       exact this
@@ -64,17 +63,17 @@ lemma lemma42 (a b : ℕ)
 
   have : ∀ g ∈ H n p r, (φ p r hrnz g)^a = (φ p r hrnz g)^b
     := λ g hg ↦ calc
-    _ = φ p r hrnz (g^a) := by simp only [map_pow]
-    _ = φ p r hrnz (g^b) := by rw[part2]; assumption
-    _ = (φ p r hrnz g)^b := by simp only [map_pow]
+    _ = φ p r hrnz (g^a) := by rw [map_pow]
+    _ = φ p r hrnz (g^b) := by rw[part2]; exact hg
+    _ = (φ p r hrnz g)^b := by rw [map_pow]
 
   -- part 3: applying this to elements of G
   have : ∀ g ∈ G n p r hrnz, g^a = g^b := λ g ⟨q, hq, hqg⟩ ↦ by
     have := this q hq
-    have := (calc
-    (rfl.mp (↑ g : 𝔽 p r))^a = (φ p r hrnz q)^a := by rw[← hqg]; rfl
-    _ = (φ p r hrnz q)^b := this
-    _ = (rfl.mp (↑ g : 𝔽 p r))^b := by rw[← hqg]; rfl)
+    have := calc
+      (rfl.mp (↑ g : 𝔽 p r))^a = (φ p r hrnz q)^a := by rw[← hqg]; rfl
+      _ = (φ p r hrnz q)^b := this
+      _ = (rfl.mp (↑ g : 𝔽 p r))^b := by rw[← hqg]; rfl
 
     exact Units.eq_iff.mp this
 
@@ -91,17 +90,15 @@ lemma lemma42 (a b : ℕ)
     intro g
     rw[orderOf_dvd_iff_pow_eq_one]
     have := this (↑ g) (g.property)
-    apply SetLike.coe_eq_coe.mp
-    exact this
+    exact SetLike.coe_eq_coe.mp this
 
   have : ∃ (g : ↥(G n p r hrnz)), orderOf g = Nat.card (G n p r hrnz) := isCyclic_iff_exists_orderOf_eq_natCard.mp inferInstance
 
-  let g := Classical.choose this
-  have hg : orderOf g = Nat.card (G n p r hrnz) := Classical.choose_spec this
+  obtain ⟨g, hg⟩ := this
 
   have : orderOf g ∣ a-b
     := order_divides_ab g
 
   rw [← hg]
-  apply Nat.ModEq.symm
+  symm
   exact (Nat.modEq_iff_dvd' hineq).mpr this
