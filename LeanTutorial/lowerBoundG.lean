@@ -45,6 +45,10 @@ noncomputable def B : ℕ :=
   ⌊ Real.logb 2 n * Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs)) ⌋₊
 
 omit pprime in
+lemma B_gt : B n p r hrnz hp hnnoprdivs + 1 > Real.logb 2 n * Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))
+  := Nat.lt_floor_add_one (Real.logb 2 ↑n * √↑(Nat.card ↥(R n p r hrnz hp hnnoprdivs)))
+
+omit pprime in
 include hn_gt_one in
 lemma AgtB : A n r ≥ B n p r hrnz hp hnnoprdivs := by
   unfold A B
@@ -244,7 +248,7 @@ lemma prod_factors₃_injective : Function.Injective (prod_factors₃ n p r hrnz
   intro a
 
   rw [roots_prod_factors, roots_prod_factors, this]
-  repeat (assumption)
+  repeat assumption
 
 include hn_gt_one childs_binomial_theorem hordern in
 lemma lower_bound_G : Nat.card (G n p r hrnz) > (n : ℝ)^(Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))) - 1
@@ -256,8 +260,16 @@ lemma lower_bound_G : Nat.card (G n p r hrnz) > (n : ℝ)^(Real.sqrt (Nat.card (
           (prod_factors₃_injective n p r hrnz hp hnnoprdivs hn_gt_one childs_binomial_theorem hordern)
       _ = 2^(B n p r hrnz hp hnnoprdivs + 1) - 1 := by simp -- wow!
     rify at ineq₁
-    suffices : (2 : ℝ)^(B n p r hrnz hp hnnoprdivs + 1) - 1 > (n : ℝ)^(Real.sqrt $ Nat.card (R n p r hrnz hp hnnoprdivs)) - 1
-    calc
-      (Nat.card (G n p r hrnz) : ℝ) ≥ (((2 : ℕ))^(B n p r hrnz hp hnnoprdivs + 1) - 1 : ℝ) := sorry -- ineq₁??
-      _ > (n : ℝ)^(Real.sqrt $ Nat.card (R n p r hrnz hp hnnoprdivs)) - 1 := this
-    sorry
+    rw[Nat.cast_sub Nat.one_le_two_pow, Nat.cast_pow, Nat.cast_one] at ineq₁
+    suffices : (2 : ℝ)^(B n p r hrnz hp hnnoprdivs + 1) > (n : ℝ)^(Real.sqrt $ Nat.card (R n p r hrnz hp hnnoprdivs))
+    . calc
+        (Nat.card (G n p r hrnz) : ℝ) ≥ (((2 : ℕ))^(B n p r hrnz hp hnnoprdivs + 1) - 1 : ℝ) := ineq₁
+        _ > (n : ℝ)^(Real.sqrt $ Nat.card (R n p r hrnz hp hnnoprdivs)) - 1 := (sub_lt_sub_iff_right 1).mpr this
+
+    apply lt_of_le_of_lt (b := (2 : ℝ) ^ (Real.logb 2 n * Real.sqrt (Nat.card (R n p r hrnz hp hnnoprdivs))))
+    . rw [Real.rpow_mul (by norm_num), Real.rpow_logb (by norm_num) (by norm_num) (Nat.cast_pos.mpr (by linarith))]
+    . simp[B]
+      rw[← Real.rpow_natCast]
+      apply Real.rpow_lt_rpow_of_exponent_lt (by norm_num)
+      rw [Nat.cast_add, Nat.cast_one]
+      exact B_gt n p r hrnz hp hnnoprdivs
