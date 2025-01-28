@@ -25,8 +25,6 @@ variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)]
 include hp hnodd in
 lemma pge3 : p ≥ 3 := by
   have pprime : Nat.Prime p := Fact.out
-  have p_odd : Odd p := by
-    exact Odd.of_dvd_nat hnodd hp
   have h_diff0 : p ≠ 0 := by
     apply Nat.Prime.ne_zero pprime
   have h_diff1 : p ≠ 1 := by
