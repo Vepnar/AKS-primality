@@ -180,7 +180,7 @@ noncomputable def prod_factors₂ (T : Finset (Finset.range (B n p r hrnz hp hnn
   exact Units.mk0 (AdjoinRoot.mk (h p r) (prod_factors n p r hrnz hp hnnoprdivs T)) $ by
     simp [prod_factors, Finset.prod_ne_zero_iff]
     intro a ha haint
-    exact nz_of_β_add_x n p r hrnz hn_gt_one childs_binomial_theorem hordern a $ by
+    exact nz_of_β_add_x n p r hrnz hp hnnoprdivs hn_gt_one childs_binomial_theorem hordern a $ by
       simp only [Finset.mem_range]
       apply lt_of_lt_of_le ha
       rw [add_le_add_iff_right]

@@ -122,7 +122,7 @@ lemma lemma43 (g q : Polynomial (ZMod p))
 
   have fn''_inj : Function.Injective fn'' := by
     have β_nzero : β p r ≠ 0 := by
-      have := nz_of_β_add_x n p r hrnz hn_gt_one childs_binomial_theorem hordern 0 (Finset.mem_range.mpr (Nat.zero_lt_succ (A n r)))
+      have := nz_of_β_add_x n p r hrnz hp hnnoprdivs hn_gt_one childs_binomial_theorem hordern 0 (Finset.mem_range.mpr (Nat.zero_lt_succ (A n r)))
       simp at this
       exact this
 
@@ -145,7 +145,7 @@ lemma lemma43 (g q : Polynomial (ZMod p))
     replace hxy := div_eq_of_eq_mul' hxy.symm
     rw[← zpow_natCast_sub_natCast] at hxy
     replace hxy := orderOf_dvd_iff_zpow_eq_one.mpr hxy
-    rw[γ_order, order_of_X_in_F _ _ hrnz,
+    rw[γ_order, order_of_X_in_F _ _ _ hrnz hp hnnoprdivs,
       ← ZMod.intCast_eq_intCast_iff_dvd_sub, Int.cast_natCast, Int.cast_natCast,
       fn_prop x, fn_prop y] at hxy
 

@@ -15,7 +15,7 @@ noncomputable def f (p r : ℕ) : Polynomial (ZMod p) := X^r - 1
 -- the element (X mod f) in Z/p[X]/(f)
 noncomputable def α (p r : ℕ): AdjoinRoot (f p r) := AdjoinRoot.root (f _ _)
 
-variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)]
+variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)]
   (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hn_gt_one : n > 1)
   (childs_binomial_theorem : ∀ a ∈ Finset.range (A n r + 1),
     (α p r + ↑ a)^n = α p r^n + ↑ a)
@@ -50,11 +50,22 @@ lemma n_ge_one : n ≥ 1 := by
 include hn_gt_one in
 lemma n_ge_two : n ≥ 2 := hn_gt_one
 
-include hrnz hordern in
+include hrnz hordern hn_gt_one in
 lemma r_ge_two : r ≥ 2 := by
   have rne0 : r ≠ 0 := hrnz
   have rne1 : r ≠ 1 := by
-    sorry -- annoying
+    intro hrone
+    have : orderOf (n : ZMod r) ≤ 1 := by
+      rw[hrone]
+      apply orderOf_le_card_univ
+    have ub := lt_of_lt_of_le hordern this
+    simp only [Nat.lt_one_iff, Nat.floor_eq_zero, sq_lt_one_iff_abs_lt_one] at ub
+    have lb : 1 ≤ Real.logb 2 n := by
+      rw[Real.le_logb_iff_rpow_le (by norm_num) (by rw [Nat.cast_pos]; linarith)]
+      simp only [Real.rpow_one, Nat.ofNat_le_cast]
+      exact hn_gt_one
+    have := not_le_of_lt $ lt_of_lt_of_le ub lb
+    exact this (le_abs_self _)
   omega
 
 -- Definitions and basic lemmas that are necessary in many places
@@ -121,26 +132,68 @@ noncomputable instance : Finite (𝔽 p r) := by
   have := Module.finite_of_finite (ZMod p) (M := 𝔽 p r)
   infer_instance
 
-include hrnz in
+lemma prod_subset_dvd
+ {α : Type u_3} {β : Type u_4} [CommMonoid β] (s : Finset α) (t : Finset α) (hst : s ⊆ t) (f : α → β) :
+  ∏ x ∈ s, f x ∣ ∏ y ∈ t, f y
+  := Finset.prod_dvd_prod_of_subset s t f hst
+
+include hrnz hp hnnoprdivs in
 lemma order_of_X_in_F : orderOf (β p r) = r := by
-  have : r > 0 := Nat.zero_lt_of_ne_zero hrnz
-  apply (orderOf_eq_iff this).mpr
+  have r_gt_zero : r > 0 := Nat.zero_lt_of_ne_zero hrnz
+  apply (orderOf_eq_iff r_gt_zero).mpr
   constructor
   . have : β p r ^ r - 1 = 0 := by calc
           _ = IsAdjoinRoot.map (AdjoinRoot.isAdjoinRoot _) _ := rfl
-          _ = AdjoinRoot.mk (h p r) (X^r-1) := by simp only [this, AdjoinRoot.isAdjoinRoot_map_eq_mk]
+          _ = AdjoinRoot.mk (h p r) (X^r-1) := by simp only [r_gt_zero, AdjoinRoot.isAdjoinRoot_map_eq_mk]
           _ = AdjoinRoot.mk (h p r) (f p r) := by congr
           _ = 0 := AdjoinRoot.mk_eq_zero.mpr (h_div p r hrnz)
     have : β p r ^ r - 1 + 1 = 0 + 1 := congrArg (. + 1) this
     simp only [sub_add_cancel, zero_add] at this
     assumption
   . intro m hmltr hmpos eq
-    let xm: Polynomial (ZMod p) := X^m -1
-    have : h p r ∣ xm := by exact AdjoinRoot.mk_eq_mk.mp eq
-    -- h is the root of a cyclotomic polynomial r such that x^m-1 is not a divisor for m < r.
-    -- contradiction with [this, hmltr]. Don't know how to show this.
-    -- I would like to prove this with help of Alain
-    sorry
+    have m_dvd_r : m ∣ r := by sorry -- oh.
+    have h_dvd_prod_cyclot : h p r ∣ X^m -1 := AdjoinRoot.mk_eq_mk.mp eq
+    -- rw[← prod_cyclotomic_eq_X_pow_sub_one hmpos] at h_dvd_prod_cyclot
+    have h_dvd_cyclot_r : h p r ∣ Polynomial.cyclotomic r (ZMod p) := h_div_cyclotomic p r hrnz
+    have p_ndvd_r : ¬(p ∣ r) := by
+      intro p_dvd_r
+      have := Nat.le_of_dvd r_gt_zero p_dvd_r
+      exact hnnoprdivs p pprime.out (And.intro hp this)
+    have xr_sep : Separable (f p r) := by
+      have := Polynomial.separable_X_pow_sub_C' p r (1 : ZMod p) p_ndvd_r one_ne_zero
+      simp at this
+      exact this
+    have : h p r * h p r ∣ f p r := by
+      unfold f
+      rw [← prod_cyclotomic_eq_X_pow_sub_one r_gt_zero]
+      calc
+      h p r * h p r ∣ cyclotomic r (ZMod p) * (X^m - 1) := mul_dvd_mul h_dvd_cyclot_r h_dvd_prod_cyclot
+
+      _ = cyclotomic r (ZMod p) * ∏ i ∈ Nat.divisors m, cyclotomic i (ZMod p) := by rw[← prod_cyclotomic_eq_X_pow_sub_one hmpos]
+
+      _ = ∏ i ∈ insert r (Nat.divisors m), cyclotomic i (ZMod p) := by
+        symm
+        apply Finset.prod_insert
+        rw[Nat.mem_divisors]
+        intro a
+        obtain ⟨hdvd, hm⟩ := a
+        have := Nat.le_of_dvd (Nat.zero_lt_of_ne_zero hm) hdvd
+        have := lt_of_lt_of_le hmltr this
+        exact lt_irrefl _ this
+
+      _ ∣ ∏ i ∈ r.divisors, cyclotomic i (ZMod p)
+        := Finset.prod_dvd_prod_of_subset _ _ (cyclotomic . (ZMod p)) $ by
+          apply Finset.insert_subset
+          . simp only [Nat.divisors, Finset.mem_filter, Finset.mem_Ico, lt_add_iff_pos_right,
+              zero_lt_one, and_true, dvd_refl]
+            exact r_gt_zero
+          exact Nat.divisors_subset_of_dvd hrnz m_dvd_r
+
+    have := Polynomial.Separable.squarefree xr_sep (h p r) this
+
+    -- get contradiction
+    exact Irreducible.not_unit (h_irr p r) this
+
     -- proof suggested by alain: f = X^r - 1 is separable because its derivative is rX^(r-1) which is nonzero
     -- at the roots of f (p does not divide r!). Writing X^r-1 = ∏ (d ∣ r) Φd, we see that a root of one cyclotomic
     -- polynomial cannot be a root of any other.
@@ -155,7 +208,7 @@ noncomputable def H : Submonoid (AdjoinRoot (f p r))
 noncomputable def Gmonoid : Submonoid (𝔽 p r) := Submonoid.map (φ p r hrnz) (H n p r)-- what is this homomorphism from and to?
 --Remark - this is a type submonoid, but we want a type set tp find a subgroup
 
-include childs_binomial_theorem hrnz hordern hn_gt_one in
+include childs_binomial_theorem hp hnnoprdivs hrnz hordern hn_gt_one in
 lemma nz_of_β_add_x : ∀ a ∈ Finset.range (A n r + 1), β p r + ↑ a ≠ 0
   := by
   intro a ha hzero
@@ -170,7 +223,7 @@ lemma nz_of_β_add_x : ∀ a ∈ Finset.range (A n r + 1), β p r + ↑ a ≠ 0
   have βnonzero : β p r ≠ 0 := by
     intro βzero
     have := pow_orderOf_eq_one (β p r)
-    rw [order_of_X_in_F p r hrnz, βzero, zero_pow hrnz] at this
+    rw [order_of_X_in_F n p r hrnz hp hnnoprdivs, βzero, zero_pow hrnz] at this
     apply zero_ne_one this
 
   rw [← Nat.sub_add_cancel (n_ge_one n hn_gt_one), pow_add, pow_one] at this
@@ -178,14 +231,14 @@ lemma nz_of_β_add_x : ∀ a ∈ Finset.range (A n r + 1), β p r + ↑ a ≠ 0
   simp[βnonzero] at this
 
   have rdivn1 := orderOf_dvd_iff_pow_eq_one.mpr this
-  rw [order_of_X_in_F p r hrnz] at rdivn1
+  rw [order_of_X_in_F n p r hrnz hp hnnoprdivs] at rdivn1
 
   have : (n : ZMod r) = 1 := by
     haveI : NeZero r := NeZero.mk hrnz
     refine (ZMod.natCast_eq_iff r n 1).mpr ?_
     obtain ⟨k, hk⟩ := rdivn1
     use k
-    rw[← hk,add_comm, ZMod.val_one'' (ne_of_lt (r_ge_two n r hrnz hordern)).symm, Nat.sub_add_cancel (n_ge_one n hn_gt_one)]
+    rw[← hk,add_comm, ZMod.val_one'' (ne_of_lt (r_ge_two n r hrnz hn_gt_one hordern)).symm, Nat.sub_add_cancel (n_ge_one n hn_gt_one)]
 
   have : orderOf (n : ZMod r) = 1 := by exact orderOf_eq_one_iff.mpr this
   simp only [this, gt_iff_lt, Nat.lt_one_iff, Nat.floor_eq_zero, sq_lt_one_iff_abs_lt_one] at hordern
@@ -195,7 +248,7 @@ lemma nz_of_β_add_x : ∀ a ∈ Finset.range (A n r + 1), β p r + ↑ a ≠ 0
   simp only [Real.rpow_one, Nat.cast_lt_ofNat] at this
   exact not_le_of_lt this hn_gt_one
 
-include childs_binomial_theorem hn_gt_one hordern in
+include childs_binomial_theorem hp hnnoprdivs hn_gt_one hordern in
 -- is this even necessary anymore?
 lemma gmonoid_not_contain_zero : 0 ∉ Gmonoid n p r hrnz
   := by
@@ -216,7 +269,7 @@ lemma gmonoid_not_contain_zero : 0 ∉ Gmonoid n p r hrnz
       simp
       exact add_le_add ha (le_refl 1)
     simp [α, β, φ, AdjoinRoot.algHomOfDvd_apply_root, h_div p r hrnz] at hxzero
-    exact nz_of_β_add_x n p r hrnz hn_gt_one childs_binomial_theorem hordern a this hxzero
+    exact nz_of_β_add_x n p r hrnz hp hnnoprdivs hn_gt_one childs_binomial_theorem hordern a this hxzero
   . exact one_ne_zero
   . rw[← gdef]
     intro x y _ _ hx hy
