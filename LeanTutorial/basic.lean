@@ -132,45 +132,57 @@ noncomputable instance : Finite (𝔽 p r) := by
   have := Module.finite_of_finite (ZMod p) (M := 𝔽 p r)
   infer_instance
 
-lemma prod_subset_dvd
- {α : Type u_3} {β : Type u_4} [CommMonoid β] (s : Finset α) (t : Finset α) (hst : s ⊆ t) (f : α → β) :
-  ∏ x ∈ s, f x ∣ ∏ y ∈ t, f y
-  := Finset.prod_dvd_prod_of_subset s t f hst
-
 include hrnz hp hnnoprdivs in
 lemma order_of_X_in_F : orderOf (β p r) = r := by
   have r_gt_zero : r > 0 := Nat.zero_lt_of_ne_zero hrnz
-  apply (orderOf_eq_iff r_gt_zero).mpr
-  constructor
-  . have : β p r ^ r - 1 = 0 := by calc
-          _ = IsAdjoinRoot.map (AdjoinRoot.isAdjoinRoot _) _ := rfl
-          _ = AdjoinRoot.mk (h p r) (X^r-1) := by simp only [r_gt_zero, AdjoinRoot.isAdjoinRoot_map_eq_mk]
-          _ = AdjoinRoot.mk (h p r) (f p r) := by congr
-          _ = 0 := AdjoinRoot.mk_eq_zero.mpr (h_div p r hrnz)
-    have : β p r ^ r - 1 + 1 = 0 + 1 := congrArg (. + 1) this
-    simp only [sub_add_cancel, zero_add] at this
-    assumption
-  . intro m hmltr hmpos eq
-    have m_dvd_r : m ∣ r := by sorry -- oh.
-    have h_dvd_prod_cyclot : h p r ∣ X^m -1 := AdjoinRoot.mk_eq_mk.mp eq
-    -- rw[← prod_cyclotomic_eq_X_pow_sub_one hmpos] at h_dvd_prod_cyclot
-    have h_dvd_cyclot_r : h p r ∣ Polynomial.cyclotomic r (ZMod p) := h_div_cyclotomic p r hrnz
+  -- First of all, β ^ r = 1 since β is a root of a divisor of f = X^r - 1
+  have β_pow_r_eq_one : β p r ^ r - 1 = 0 := by calc
+    _ = IsAdjoinRoot.map (AdjoinRoot.isAdjoinRoot _) _ := rfl
+    _ = AdjoinRoot.mk (h p r) (X^r-1) := by simp only [r_gt_zero, AdjoinRoot.isAdjoinRoot_map_eq_mk]
+    _ = AdjoinRoot.mk (h p r) (f p r) := by congr
+    _ = 0 := AdjoinRoot.mk_eq_zero.mpr (h_div p r hrnz)
+  replace β_pow_r_eq_one : β p r ^ r - 1 + 1 = 0 + 1 := congrArg (. + 1) β_pow_r_eq_one
+  simp only [sub_add_cancel, zero_add] at β_pow_r_eq_one
+  -- Therefore, the order of β divides r.
+  have orderβ_dvd_r := orderOf_dvd_of_pow_eq_one (G := 𝔽 p r) β_pow_r_eq_one
+  apply Nat.le_antisymm
+  -- It follows that the order of β is at most r,
+  . exact Nat.le_of_dvd r_gt_zero orderβ_dvd_r
+  -- so it suffices to show that it cannot be less than r.
+  -- Call the order m for convenience.
+  . by_contra hmltr
+    simp only [not_le] at hmltr
+    set m := orderOf (β p r)
+    have hmpos : 0 < m := orderOf_pos_iff.mpr (isOfFinOrder_iff_pow_eq_one.mpr ⟨r, r_gt_zero, β_pow_r_eq_one⟩)
+    have eq : AdjoinRoot.mk (h p r) (X^m) = AdjoinRoot.mk (h p r) 1 := by
+      rw[map_pow, map_one]
+      exact pow_orderOf_eq_one _
+    have m_dvd_r : m ∣ r := orderβ_dvd_r
+    have h_dvd_xm : h p r ∣ X^m - 1 := AdjoinRoot.mk_eq_mk.mp eq
+
     have p_ndvd_r : ¬(p ∣ r) := by
       intro p_dvd_r
       have := Nat.le_of_dvd r_gt_zero p_dvd_r
       exact hnnoprdivs p pprime.out (And.intro hp this)
+
+    -- Because its degree is not divisible by p, the derivative of f does not vanish on its roots, so it is separable
+    -- and therefore squarefree.
     have xr_sep : Separable (f p r) := by
       have := Polynomial.separable_X_pow_sub_C' p r (1 : ZMod p) p_ndvd_r one_ne_zero
       simp at this
       exact this
+    have f_sqfree := Polynomial.Separable.squarefree xr_sep (h p r)
+
+    -- Thus, we obtain a contradiction if we show that h^2 divides f (as h is not a unit). And it does:
+    -- h by definition divides the r'th cyclotomic polynomial and it divides X^m - 1 by the assumption
+    -- that m is the order of X in 𝔽. As we're assuming that m < r, it follows that h^2 divides
+    -- X^r-1 = ∏ divisors i of m, i'th cyclotomic polynomial.
     have : h p r * h p r ∣ f p r := by
       unfold f
       rw [← prod_cyclotomic_eq_X_pow_sub_one r_gt_zero]
       calc
-      h p r * h p r ∣ cyclotomic r (ZMod p) * (X^m - 1) := mul_dvd_mul h_dvd_cyclot_r h_dvd_prod_cyclot
-
+      h p r * h p r ∣ cyclotomic r (ZMod p) * (X^m - 1) := mul_dvd_mul (h_div_cyclotomic p r hrnz) h_dvd_xm
       _ = cyclotomic r (ZMod p) * ∏ i ∈ Nat.divisors m, cyclotomic i (ZMod p) := by rw[← prod_cyclotomic_eq_X_pow_sub_one hmpos]
-
       _ = ∏ i ∈ insert r (Nat.divisors m), cyclotomic i (ZMod p) := by
         symm
         apply Finset.prod_insert
@@ -180,7 +192,6 @@ lemma order_of_X_in_F : orderOf (β p r) = r := by
         have := Nat.le_of_dvd (Nat.zero_lt_of_ne_zero hm) hdvd
         have := lt_of_lt_of_le hmltr this
         exact lt_irrefl _ this
-
       _ ∣ ∏ i ∈ r.divisors, cyclotomic i (ZMod p)
         := Finset.prod_dvd_prod_of_subset _ _ (cyclotomic . (ZMod p)) $ by
           apply Finset.insert_subset
@@ -188,15 +199,8 @@ lemma order_of_X_in_F : orderOf (β p r) = r := by
               zero_lt_one, and_true, dvd_refl]
             exact r_gt_zero
           exact Nat.divisors_subset_of_dvd hrnz m_dvd_r
-
-    have := Polynomial.Separable.squarefree xr_sep (h p r) this
-
-    -- get contradiction
-    exact Irreducible.not_unit (h_irr p r) this
-
-    -- proof suggested by alain: f = X^r - 1 is separable because its derivative is rX^(r-1) which is nonzero
-    -- at the roots of f (p does not divide r!). Writing X^r-1 = ∏ (d ∣ r) Φd, we see that a root of one cyclotomic
-    -- polynomial cannot be a root of any other.
+    -- So we get a contradiction
+    exact Irreducible.not_unit (h_irr p r) (f_sqfree this)
 
 noncomputable def φ : AdjoinRoot (f p r) →ₐ[ZMod p] AdjoinRoot (h p r)
   := AdjoinRoot.algHomOfDvd (h_div p r hrnz)
