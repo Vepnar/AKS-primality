@@ -68,3 +68,6 @@ theorem AKS (n r : ℕ) (hn: n ≥ 2) (rpos : 0 < r) (hr: r < n) (hnodd : Odd n)
             _ = AdjoinRoot.of (f n r) ((a : ZMod n)^n) := by rw[map_pow]
             _ = AdjoinRoot.of (f n r) (a : ZMod n) := by simp only [ZMod.pow_card, map_natCast]
             _ = AdjoinRoot.of (f n r) a := by rw [map_natCast]
+
+-- If sorryAx is not in the list, then our proof is sorry-free.
+#print axioms AKS

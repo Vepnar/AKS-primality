@@ -55,15 +55,7 @@ lemma r_ge_two : r ≥ 2 := by
   have rne0 : r ≠ 0 := hrnz
   have rne1 : r ≠ 1 := by
     sorry -- annoying
-  by_contra hx
-  have := lt_of_not_ge hx
-  cases r with
-  | zero => exact rne0 rfl
-  | succ r' => cases r' with
-    | zero => exact rne1 rfl
-    | succ r'' =>
-      rw[add_assoc] at this;
-      simp only [Nat.reduceAdd, add_lt_iff_neg_right, not_lt_zero'] at this;
+  omega
 
 -- Definitions and basic lemmas that are necessary in many places
 
@@ -353,8 +345,44 @@ lemma restatement_S₂ (k : ℕ)
   := by
   rw[restatement_S]
   have : ∀ g : (ZMod p)[X], (AdjoinRoot.mk (f p r)) (g.comp (X ^ k)) = g.aeval (α p r^k) := by
-    simp[comp, α, hom_eval₂,mk_C_eq_of, aeval, Algebra.ofId]
+    simp[comp, α, hom_eval₂, mk_C_eq_of, aeval, Algebra.ofId]
   simp_rw[this]
+  rfl
+
+-- lemma helper₂ : (h p r).aeval (β p r ^ k) = 0 := by
+--   simp only [aeval, eval₂AlgHom'_apply]
+--   sorry
+
+lemma algHomOfDvd_mk (K : Type*) [Field K] {p q : K[X]} (hpq : q ∣ p)
+  {g : K[X]}
+  : AdjoinRoot.algHomOfDvd hpq (AdjoinRoot.mk p g) = AdjoinRoot.mk q g
+  := by
+  induction g using Polynomial.induction_on' with
+  | h_add g g' hg hg' => simp[hg, hg']
+  | h_monomial k a =>
+    rw[← Polynomial.C_mul_X_pow_eq_monomial]
+    simp only [map_mul, AdjoinRoot.mk_C, map_pow, map_mul, AdjoinRoot.mk_X,AdjoinRoot.algHomOfDvd_apply_root hpq]
+    congr 1
+    unfold AdjoinRoot.algHomOfDvd
+    simp
+
+include hrnz in
+lemma consequence_S
+  (k : ℕ) (hk : k ∈ S n p r)
+  (g : (ZMod p)[X])
+  (hg : AdjoinRoot.mk (f p r) g ∈ H n p r)
+  : g.aeval (β p r^k) = AdjoinRoot.mk (h p r) g^k
+  := by
+  let a := AdjoinRoot.mk (f p r) g
+  have ha : a ∈ H n p r := hg
+  have := congrArg (φ p r hrnz) (hk a ha)
+  rw [map_pow] at this
+  have what : φ p r hrnz a = (AdjoinRoot.mk (h p r)) g := by
+    simp[φ, a, algHomOfDvd_mk]
+  rw [what] at this
+  rw[this]
+  unfold β α φ a
+  rw[AdjoinRoot.liftHom_mk,← Polynomial.aeval_algHom_apply, map_pow, AdjoinRoot.algHomOfDvd_apply_root]
   rfl
 
 include hrnz hnnoprdivs in

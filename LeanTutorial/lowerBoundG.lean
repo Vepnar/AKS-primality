@@ -217,36 +217,18 @@ lemma prod_factors₃_injective : Function.Injective (prod_factors₃ n p r hrnz
   replace hxy := congrArg (λ g ↦ g.val) hST
   simp only [Units.mk0_inj] at hxy
   haveI : Fact (n ≥ 1) := Fact.mk (Nat.one_le_of_lt hn_gt_one)
-  have := lemma43 n p r hrnz hnnoprdivs
+  have := lemma43 n p r hrnz hp hnnoprdivs hn_gt_one childs_binomial_theorem hordern
     (prod_factors n p r hrnz hp hnnoprdivs ↑S)
     (prod_factors n p r hrnz hp hnnoprdivs ↑T)
-    ?_
-    ?_
+    (prod_factors_in_H n p r hrnz hp hnnoprdivs hn_gt_one S)
+    (prod_factors_in_H n p r hrnz hp hnnoprdivs hn_gt_one T)
     hxy
     (deg_of_non_univ n p r hrnz hp hnnoprdivs hn_gt_one hordern S.val S.property)
     (deg_of_non_univ n p r hrnz hp hnnoprdivs hn_gt_one hordern T.val T.property)
 
-  rotate_left 1
-  . have := prod_factors_in_H n p r hrnz hp hnnoprdivs hn_gt_one S
-    simp [Gmonoid]
-    use AdjoinRoot.mk (f p r) (prod_factors n p r hrnz hp hnnoprdivs S)
-    constructor
-    . exact this
-    . simp only [φ, AdjoinRoot.algHomOfDvd, Finset.univ_eq_attach, ne_eq, AdjoinRoot.liftHom_mk,
-        AdjoinRoot.aeval_eq]
-  . have := prod_factors_in_H n p r hrnz hp hnnoprdivs hn_gt_one T
-    simp [Gmonoid]
-    use AdjoinRoot.mk (f p r) (prod_factors n p r hrnz hp hnnoprdivs T)
-    constructor
-    . exact this
-    . simp only [φ, AdjoinRoot.algHomOfDvd, Finset.univ_eq_attach, ne_eq, AdjoinRoot.liftHom_mk,
-        AdjoinRoot.aeval_eq]
-    -- is there some way to extract out the repetition?
-
   apply Subtype.eq
   apply Finset.ext
   intro a
-
   rw [roots_prod_factors, roots_prod_factors, this]
   repeat assumption
 

@@ -1,176 +1,167 @@
 import Mathlib
 import LeanTutorial.basic
+import LeanTutorial.lemma_41
 open Polynomial
 
 variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)]
-  (hnnoprdivs : no_prime_divisors_below n r)
-  (hnnotperfpow : ¬ is_perfect_power n)  [hge1: Fact (n ≥ 1)] -- use a weaker assumption, have a bit more general lemma
+  (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hn_gt_one : n > 1)
+  (childs_binomial_theorem : ∀ a ∈ Finset.range (A n r + 1),
+    (α p r + ↑ a)^n = α p r^n + ↑ a)
+  (hordern : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2 ⌋₊)
 
-lemma logb_base2_ge_one {n : ℕ} (hn : n ≥ 2) : 1 ≤ Real.logb 2 n := by
-    cases n
-    exfalso
-    exact Nat.not_succ_le_zero 1 hn
-    case succ n =>
-    rw[Real.le_logb_iff_rpow_le]
-    simp
-    rw[ge_iff_le] at hn
-    rify at hn
-    exact hn
-    exact one_lt_two
-    have : 0 < n + 1 := by
-      exact Nat.zero_lt_succ n
-    rify at this
-    simp
-    exact this
+lemma card_rootSet_le_card_aroots {R A : Type*} [Field R] [CommRing A] [IsDomain A] [Algebra R A]
+  (g : R[X]) : Nat.card (g.rootSet A) ≤ (g.aroots A).card
+  := by
+  classical
+  simp only [Nat.card_eq_fintype_card, rootSet]
+  simp_all only [Finset.coe_sort_coe, Multiset.mem_toFinset, mem_roots', ne_eq, Polynomial.map_eq_zero, IsRoot.def,
+    eval_map_algebraMap, Fintype.card_coe]
+  exact Multiset.toFinset_card_le (g.aroots A)
 
-lemma nge2 (hn' : p ∣ n) : n ≥ 2 := by
-    have pprime := pprime.out
-    have nge0 := hge1.out
-    have zero_lt_n : 0 < n := lt_of_lt_of_le (zero_lt_one) nge0
-    have p_le_n : p ≤ n := Nat.le_of_dvd zero_lt_n hn'
-    have pge2 : 2 ≤ p := Nat.Prime.two_le pprime
-    apply lt_of_lt_of_le pge2 p_le_n
+set_option maxHeartbeats 1000000
 
-lemma lemma43' (g q : Polynomial (ZMod p))
-  (hg : AdjoinRoot.mk (h p r) g ∈ Gmonoid n p r hrnz) (hq : AdjoinRoot.mk (h p r) q ∈ Gmonoid n p r hrnz)
+include childs_binomial_theorem hn_gt_one hordern in
+lemma lemma43 (g q : Polynomial (ZMod p))
+  (hg' : AdjoinRoot.mk (f p r) g ∈ H n p r) (hq' : AdjoinRoot.mk (f p r) q ∈ H n p r)
   (hmod : AdjoinRoot.mk (h p r) g = AdjoinRoot.mk (h p r) q)
-  (hdegg : Polynomial.natDegree g < Nat.card (R n p r hrnz hp hnnoprdivs)) (hdegq : Polynomial.natDegree q < Nat.card (R n p r hrnz hp hnnoprdivs))
+  (hdegg' : Polynomial.degree g < Nat.card (R n p r hrnz hp hnnoprdivs)) (hdegq' : Polynomial.degree q < Nat.card (R n p r hrnz hp hnnoprdivs))
   : g = q := by
+
   let Δ := g - q
-  let Δ' := AdjoinRoot.mk (h p r) Δ
 
-  -- have lem_g : AdjoinRoot.mk (f p r) g ∈ H n p r := sorry
+  suffices : Δ = 0
+  . exact sub_eq_zero.mp this
+  -- the idea of this proof is to show that Δ has too many roots for it not to be the zero polynomial.
+  -- Polynomial.eq_zero_of_natDegree_lt_card_of_eval_eq_zero
+  -- doesn't quite work for us, as the roots of Δ lie in an algebra over ZMod p.
+  -- instead, we do it a bit more manually.
 
-  obtain ⟨g', hg'₁, hg'₂⟩ := hg
-  obtain ⟨q', hq'₁, hq'₂⟩ := hq
+  by_contra Δ_nzero
 
-  have : ∀ k ∈ S n p r, Δ.aeval (β p r^k) = 0
+  have is_root : ∀ k ∈ S n p r, Δ.aeval (β p r^k) = 0
     := by
     intro k hk
     unfold Δ
     simp
-    suffices : g.aeval (α p r^k) = q.aeval (α p r^k)
-    . have := congrArg (φ p r hrnz) this
-      rw [← aeval_algHom_apply (φ p r hrnz), ← aeval_algHom_apply (φ p r hrnz)] at this
-      simp[φ, α, AdjoinRoot.algHomOfDvd_apply_root] at this
-      exact sub_eq_zero_of_eq this
-    have := (restatement_S₂ n p r k).mp hk g sorry
-    rw[this, (restatement_S₂ n p r k).mp hk q sorry]
-    congr 1
-    -- hmmmmm. on the right track though.
-    sorry
+    suffices : g.aeval (β p r^k) = q.aeval (β p r^k)
+    . exact sub_eq_zero_of_eq this
+    have eqg := consequence_S n p r hrnz k hk g hg'
+    have eqq := consequence_S n p r hrnz k hk q hq'
+    rw[eqg, eqq]
+    congr
 
-  have : Δ.natDegree < Nat.card (R n p r hrnz hp hnnoprdivs) := by
-    have : 1 ≤ Nat.card (R n p r hrnz hp hnnoprdivs) := by sorry
-    rw [Nat.lt_iff_le_pred this] at hdegg hdegq ⊢
-    unfold Δ
-    exact (Polynomial.natDegree_sub_le_iff_left hdegq).mpr hdegg
+  have hdegΔ : Δ.degree < Nat.card (R n p r hrnz hp hnnoprdivs) := by
+    cases Classical.em (g = 0) with
+    | inl hg => simpa [Δ, hg]
+    | inr hg => cases Classical.em (q = 0) with
+      | inl hq => simpa [Δ, hq]
+      | inr hq =>
 
-  have : ∀ k ∈ R n p r hrnz hp hnnoprdivs, ∃ k' ∈ S n p r, k' = k.val
-    := sorry
-  let fn (k : R n p r hrnz hp hnnoprdivs) : S n p r := sorry
-  have : ∀ (k : R n p r hrnz hp hnnoprdivs), k.val.val = fn k := sorry
-  have : Function.Injective fn := sorry
+    rw [← Polynomial.natDegree_lt_iff_degree_lt] at hdegg' hdegq' ⊢ <;> try assumption
+    have : 1 ≤ Nat.card (R n p r hrnz hp hnnoprdivs) := by
+      haveI : Fintype (R n p r hrnz hp hnnoprdivs) := instRFintype n p r hrnz hp hnnoprdivs
+      rw[Nat.card_eq_fintype_card]
+      exact Fintype.card_pos
+    rw [Nat.lt_iff_le_pred this] at hdegg' hdegq' ⊢
+    exact (Polynomial.natDegree_sub_le_iff_left hdegq').mpr hdegg'
 
-  -- use Polynomial.card_roots'
+  have : ∀ k ∈ R n p r hrnz hp hnnoprdivs, ∃ (k' : S n p r), k' = k.val
+    := by
+    intro k hk
+    induction hk using Subgroup.closure_induction with
+    | mem x hx =>
+      simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hx
+      cases hx with
+      | inl hx =>
+        use ⟨n, ninS n p r childs_binomial_theorem⟩
+        simp[hx, n']
+      | inr hx =>
+        use ⟨p, pinS n p r⟩
+        simp[hx, p']
+    | one =>
+      use ⟨1, one_in_S n p r⟩
+      simp
+    | mul x y hx hy hx₂ hy₂ =>
+      obtain ⟨⟨k₁', k₁'_in_S⟩, hk₁'⟩ := hx₂
+      obtain ⟨⟨k₂', k₂'_in_S⟩, hk₂'⟩ := hy₂
+      use ⟨k₁' * k₂', lemma41 n p r _ _ k₁'_in_S k₂'_in_S⟩
+      simp[hk₁', hk₂']
+    | inv x hx ih =>
+      -- TODO: is there no induction principle to eliminate this step in case of a finite group?
+      -- or something like: a finite submonoid is a subgroup?
+      -- can't find anything
+      let o := orderOf x
+      have : x⁻¹ = x^(o-1) := by
+        refine Eq.symm (eq_inv_of_mul_eq_one_left ?_)
+        nth_rw 2 [← pow_one x]
+        rw [← pow_add, Nat.sub_add_cancel (orderOf_pos x)]
+        exact pow_orderOf_eq_one x
+      rw[this]
+      obtain ⟨⟨i, hi₁⟩, hi₂⟩ := ih
+      use ⟨i^(o-1), pow_in_S n p r _ _ hi₁⟩
+      simp[hi₂]
 
-  sorry
+  let fn (k : R n p r hrnz hp hnnoprdivs) : S n p r :=
+    Classical.choose $ this k k.property
 
-  -- have helper' (k : ℕ) : (h p r).aeval (β p r^k) = 0 := sorry
+  have fn_prop (k : R n p r hrnz hp hnnoprdivs) : fn k = k.val.val:=
+    Classical.choose_spec (this k k.property)
 
-  -- have : ∀ k ∈ S n p r, Δ'.liftHom (h p r) (β p r^k) (helper' k) = 0
-  --   := by
-  --   intro k hk
-  --   obtain ⟨g', hg'₁, hg'₂⟩ := hg
-  --   obtain ⟨q', hq'₁, hq'₂⟩ := hq
-  --   calc
-  --   Δ'.liftHom (h p r) (β p r^k) (helper' k)
-  --     = (AdjoinRoot.mk (h p r) g).liftHom (h p r) (β p r^k) (helper' k) - (AdjoinRoot.mk (h p r) q).liftHom (h p r) (β p r^k) (helper' k) := by simp[Δ, Δ']
-  --   _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g').liftHom (h p r) (β p r^k) (helper' k) - (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q').liftHom (h p r) (β p r^k) (helper' k) := by rw[← hg'₂,← hq'₂]; rfl
-  --   _ = (AdjoinRoot.algHomOfDvd (h_div p r hrnz) g').liftHom (h p r) (β p r^k) (helper' k) - (AdjoinRoot.algHomOfDvd (h_div p r hrnz) q').liftHom (h p r) (β p r^k) (helper' k) := by rfl
-  --   _ = 0 := sorry
+  let fn' (k : R n p r hrnz hp hnnoprdivs) := by
+    let e := fn k
+    exact β p r^e.val
 
-  -- sorry
+  have fn'_root (k : R n p r hrnz hp hnnoprdivs) : fn' k ∈ Δ.rootSet _ := by
+    rw[Polynomial.mem_rootSet]
+    simp only [ne_eq, Δ_nzero, not_false_eq_true, true_and]
+    unfold fn'
+    exact is_root (fn k) (fn k).property
 
-lemma lemma43 (g q : Polynomial (ZMod p))
-  (hg : AdjoinRoot.mk (h p r) g ∈ Gmonoid n p r hrnz) (hq : AdjoinRoot.mk (h p r) q ∈ Gmonoid n p r hrnz)
-  (hmod : AdjoinRoot.mk (h p r) g = AdjoinRoot.mk (h p r) q)
-  (hdegg : Polynomial.degree g < Nat.card (R n p r hrnz hp hnnoprdivs)) (hdegq : Polynomial.degree q < Nat.card (R n p r hrnz hp hnnoprdivs))
-  : g = q := by
-  let Δ := g - q
-  have hΔmod : ∀ k ∈ S n p r, AdjoinRoot.mk (h p r) (Δ.comp X^k) = 0
-  intro w -- changed X to w so it is not confused with X variable, you can always change it back
-  simp
-  intro hX
+  let fn'' (k : R n p r hrnz hp hnnoprdivs) : Δ.rootSet _ :=
+    ⟨ fn' k, fn'_root k ⟩
 
-  constructor
-  . rw[AdjoinRoot.mk_eq_mk] at hmod
-    exact hmod
-  show w ≠ 0
-  by_contra hw
-  rw[hw] at hX
-  unfold S at hX
-  simp at hX
-  specialize hX (AdjoinRoot.mk (f p r) (X + 1))
-  simp at hX
-  have polinH: AdjoinRoot.root (f p r) + 1 ∈ H n p r := by
-    unfold H
-    apply Submonoid.subset_closure
-    unfold α
-    use 1
-    simp
-    unfold A
-    apply Nat.le_floor
-    simp
-    refine one_le_mul_of_one_le_of_one_le ?_ ?_
-    swap
-    rw[Real.one_le_sqrt]
-    -- linarith
-    simp
-    exact Nat.zero_lt_of_ne_zero (by trivial)
-    apply logb_base2_ge_one (nge2 n p hp)
-  have eqq := by exact (hX polinH)
-  have eqq': (AdjoinRoot.mk (f p r)) 1  = (AdjoinRoot.mk (f p r)) 0 := by
-    simp
-    exact eqq
+  have fn''_inj : Function.Injective fn'' := by
+    have β_nzero : β p r ≠ 0 := by
+      have := nz_of_β_add_x n p r hrnz hn_gt_one childs_binomial_theorem hordern 0 (Finset.mem_range.mpr (Nat.zero_lt_succ (A n r)))
+      simp at this
+      exact this
 
-  have p_ndiv_one : ¬ p ∣ 1 := Nat.Prime.not_dvd_one pprime.out
-  have : NeZero (1 : AdjoinRoot (f p r)) := by
-    haveI : CharP (AdjoinRoot (f p r)) p := instCharPAdjoinRootF _ _ hrnz
-    have := NeZero.of_not_dvd (AdjoinRoot (f p r)) p_ndiv_one
-    simp at *
-    assumption
+    let γ := Units.mk0 (β p r) β_nzero
+    have γ_order : orderOf γ = orderOf (β p r) := orderOf_eq_orderOf_iff.mpr $ by
+      intro n
+      simp[γ, ← Units.eq_iff]
 
-  have contrad := this.out eqq'
-  exact contrad
+    intro x y hxy
+    unfold fn'' fn' at hxy
+    rw[Subtype.mk_eq_mk] at hxy
+    simp only at hxy
 
-  -- rw[AdjoinRoot.mk_eq_mk] at eqq'
-  -- simp at eqq'
-  -- rw[dvd_iff_exists_eq_mul_left] at eqq'
-  -- cases' eqq' with o1 o2
-  -- apply_fun Polynomial.natDegree at o2
-  -- rw[Polynomial.natDegree_mul] at o2
-  -- simp at o2
-  -- have degf : (f p r).natDegree = r := by sorry
-  -- --rw[degf] at o2
-  -- rw[eq_comm] at o2
-  -- rw[Nat.add_eq_zero_iff] at o2
-  -- cases' o2 with o2 o3
-  -- rw[o3] at degf
-  -- rw[eq_comm] at degf
-  -- exact (hrnz degf)
+    replace hxy : γ ^ ((fn x).val) = γ ^ ((fn y).val)
+      := by
+      rw[← Units.eq_iff]
+      simp[γ,hxy]
 
-  -- by_contra t
-  -- rw[t] at o2
-  -- simp at o2
+    rw[← mul_one (γ ^ _)] at hxy
+    replace hxy := div_eq_of_eq_mul' hxy.symm
+    rw[← zpow_natCast_sub_natCast] at hxy
+    replace hxy := orderOf_dvd_iff_zpow_eq_one.mpr hxy
+    rw[γ_order, order_of_X_in_F _ _ hrnz,
+      ← ZMod.intCast_eq_intCast_iff_dvd_sub, Int.cast_natCast, Int.cast_natCast,
+      fn_prop x, fn_prop y] at hxy
 
-  rw[AdjoinRoot.mk_eq_mk, dvd_iff_exists_eq_mul_left] at hmod
-  cases' hmod with u uu
-  rw[sub_eq_iff_eq_add] at uu
-  rw[uu, add_left_eq_self]
-  rw[← add_neg_eq_iff_eq_add] at uu
-  simp
+    apply Subtype.eq
+    apply Units.eq_iff.mp
+    exact hxy
 
-  have orderX : orderOf (β p r) = r := order_of_X_in_F p r hrnz
+  have : Nat.card (R n p r hrnz hp hnnoprdivs) ≤ Nat.card (Δ.rootSet (𝔽 p r)) :=
+    Nat.card_le_card_of_injective fn'' fn''_inj
 
-  sorry
+  have := calc
+    Nat.card ↥(R n p r hrnz hp hnnoprdivs) ≤ Nat.card ↑(Δ.rootSet (𝔽 p r)) := this
+    _ ≤ (Δ.aroots (𝔽 p r)).card := card_rootSet_le_card_aroots Δ
+    _ = (Δ.map (algebraMap _ _)).roots.card := by rw[aroots_def]
+    _ ≤ (Δ.map (algebraMap _ _)).natDegree := Polynomial.card_roots' $ Δ.map (algebraMap _ _)
+    _ = Δ.natDegree := Polynomial.natDegree_map (algebraMap (ZMod p) (𝔽 p r))
+    _ < Nat.card (R n p r hrnz hp hnnoprdivs) := (Polynomial.natDegree_lt_iff_degree_lt Δ_nzero).mpr hdegΔ
+
+  exact Nat.lt_irrefl _ this
