@@ -1,6 +1,6 @@
 import Mathlib
-import LeanTutorial.basic
-import LeanTutorial.lemma_43
+import AKS.basic
+import AKS.lemma_43
 
 variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)]
   (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hn_gt_one : n > 1)

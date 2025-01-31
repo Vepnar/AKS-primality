@@ -1,7 +1,7 @@
 import Mathlib
-import LeanTutorial.basic
-import LeanTutorial.lowerBoundG
-import LeanTutorial.upperBoundG
+import AKS.basic
+import AKS.lowerBoundG
+import AKS.upperBoundG
 
 theorem AKS (n r : ℕ) (hn: n ≥ 2) (rpos : 0 < r) (hr: r < n) (hnodd : Odd n) (hnorder : orderOf (↑ n : ZMod r) > ⌊(Real.logb 2 n) ^ 2 ⌋₊):
     (¬is_perfect_power n ∧ no_prime_divisors_below n r

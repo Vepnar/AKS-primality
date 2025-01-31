@@ -1,6 +1,6 @@
 import Mathlib
-import LeanTutorial.basic
--- import LeanTutorial.lemma_41
+import AKS.basic
+-- import AKS.lemma_41
 
 open Polynomial
 variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)

@@ -1,5 +1,5 @@
 import Mathlib
-import LeanTutorial.basic
+import AKS.basic
 open Polynomial
 
 variable (n p r : ℕ) (hrnz : r ≠ 0) [Fact (Nat.Prime p)] (A : ℕ)

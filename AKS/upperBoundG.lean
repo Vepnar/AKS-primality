@@ -1,9 +1,9 @@
 import Mathlib
-import LeanTutorial.basic
-import LeanTutorial.distinct_lemma
-import LeanTutorial.lemma_41
-import LeanTutorial.lemma_42
-import LeanTutorial.pdivninS
+import AKS.basic
+import AKS.distinct_lemma
+import AKS.lemma_41
+import AKS.lemma_42
+import AKS.pdivninS
 
 variable (n p r : ℕ) (hrnz : r ≠ 0) [pprime : Fact (Nat.Prime p)]
   (hp : p ∣ n) (hnnoprdivs : no_prime_divisors_below n r) (hnnotperfpow : ¬ is_perfect_power n) (hnodd : Odd n) (hn_gt_one : n > 1)

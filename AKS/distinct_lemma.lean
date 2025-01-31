@@ -1,5 +1,5 @@
 import Mathlib
-import LeanTutorial.basic
+import AKS.basic
 
 variable
   (n p : ℕ) [pprime : Fact (p.Prime)]
